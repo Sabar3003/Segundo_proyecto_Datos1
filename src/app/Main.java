@@ -2,6 +2,8 @@ package app;
 
 import graph.Graph;
 import graph.Vertex;
+import structures.MyPriorityQueue;
+import structures.UnionFind;
 
 /**
  * Clase principal del proyecto.
@@ -64,5 +66,37 @@ public class Main {
         System.out.println();
         System.out.println("Peso entre A y B: " + graph.getWeight("A", "B"));
         System.out.println("Peso entre A y C: " + graph.getWeight("A", "C"));
+
+        /*
+         * Prueba de cola de prioridad.
+         *
+         * Debe extraer primero el elemento con menor prioridad.
+         */
+        System.out.println();
+        System.out.println("Prueba MyPriorityQueue:");
+        MyPriorityQueue<String> pq = new MyPriorityQueue<>(10);
+
+        pq.insert("A", 30);
+        pq.insert("B", 10);
+        pq.insert("C", 20);
+
+        System.out.println(pq.extractMin()); // Debe imprimir B
+        System.out.println(pq.extractMin()); // Debe imprimir C
+        System.out.println(pq.extractMin()); // Debe imprimir A
+
+        /*
+         * Prueba de UnionFind.
+         *
+         * Sirve para verificar si dos elementos pertenecen al mismo conjunto.
+         */
+        System.out.println();
+        System.out.println("Prueba UnionFind:");
+        UnionFind uf = new UnionFind(5);
+
+        uf.union(0, 1);
+        uf.union(1, 2);
+
+        System.out.println(uf.connected(0, 2)); // true
+        System.out.println(uf.connected(0, 4)); // false
     }
 }

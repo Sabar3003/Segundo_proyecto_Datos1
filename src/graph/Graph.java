@@ -260,4 +260,34 @@ public class Graph {
             System.out.println();
         }
     }
+
+    /**
+     * Verifica si existe una arista directa entre dos vértices.
+     *
+     * @param from vértice origen.
+     * @param to vértice destino.
+     * @return true si existe conexión directa.
+     */
+    public boolean hasEdge(String from, String to) {
+        return getWeight(from, to) != -1;
+    }
+    /**
+     * Retorna la capacidad máxima del arreglo de vértices.
+     *
+     * @return capacidad máxima del grafo.
+     */
+    public int getMaxVertices() {
+        return vertices.length;
+    }
+    /**
+     * Retorna el arreglo interno de vértices.
+     *
+     * Este método permite que los algoritmos recorran los vértices.
+     * Se debe tener cuidado de usar solo las posiciones desde 0 hasta vertexCount - 1.
+     *
+     * @return arreglo de vértices.
+     */
+    public Vertex[] getVertices() {
+        return vertices;
+    }
 }
