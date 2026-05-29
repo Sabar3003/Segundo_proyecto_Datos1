@@ -98,5 +98,24 @@ public class Main {
 
         System.out.println(uf.connected(0, 2)); // true
         System.out.println(uf.connected(0, 4)); // false
+
+        // PRUEBAS DE BFS Y DFS
+        System.out.println("\n=================================");
+        System.out.println("   PRUEBAS DE RECORRIDOS   ");
+        System.out.println("=================================");
+        // Ejecutamos desde el nodo inicial "A" (El depósito)
+        System.out.println("Ejecutando desde el depósito (A):");
+        algorithms.GraphAlgorithms.bfs(graph, "A");
+        algorithms.GraphAlgorithms.dfs(graph, "A");
+
+        //  PRUEBAS DE WARSHALL
+        graph.addVertex(new Vertex("X", "ENTREGA", 600, 600));  // Agregamos un nodo trampa que no conectamos con nadie
+        algorithms.GraphAlgorithms.warshall(graph, "A"); // Llamamos al algoritmo pasándole el depósito "A"
+
+        // PRUEBAS DE DIJKSTRA
+        algorithms.GraphAlgorithms.dijkstra(graph, "A"); // Ejecutamos Dijkstra desde el depósito central "A"
+
+        // PRUEBAS DE FLOYD-WARSHALL
+        algorithms.GraphAlgorithms.floydWarshall(graph);
     }
 }
