@@ -393,4 +393,94 @@ public class GraphAlgorithms {
             System.out.println(); // Salto a la siguiente fila
         }
     }
+
+    /**
+     * // Agregado por integrante 3
+     * Calcula y retorna la matriz de distancias mínimas usando Floyd-Warshall.
+     *
+     * Este método es parecido a floydWarshall(Graph graph), pero en lugar de
+     * solo imprimir la matriz, la devuelve como int[][].
+     *
+     * Esto es necesario para el planificador de rutas, porque las heurísticas
+     * Nearest Neighbor y MST-Based necesitan consultar rápidamente la distancia
+     * mínima entre dos puntos.
+     *
+     * @param graph grafo de la ciudad.
+     * @return matriz de distancias mínimas entre todos los pares de vértices.
+     */
+    public static int[][] getFloydWarshallDistanceMatrix(Graph graph) {
+
+        int maxV = graph.getMaxVertices();
+        Vertex[] vertices = graph.getVertices();
+
+        // Matriz donde se guardarán las distancias mínimas.
+        int[][] dist = new int[maxV][maxV];
+
+        // Inicializamos la matriz con las distancias directas.
+        for (int i = 0; i < maxV; i++) {
+            for (int j = 0; j < maxV; j++) {
+
+                // Si alguna posición no tiene vértice, se marca como inalcanzable.
+                if (vertices[i] == null || vertices[j] == null) {
+                    dist[i][j] = Integer.MAX_VALUE;
+                    continue;
+                }
+
+                String fromId = vertices[i].getId();
+                String toId = vertices[j].getId();
+
+                if (i == j) {
+                    // La distancia de un vértice hacia sí mismo es 0.
+                    dist[i][j] = 0;
+                } else if (graph.hasEdge(fromId, toId)) {
+                    // Si existe una arista directa, se usa su peso.
+                    dist[i][j] = graph.getWeight(fromId, toId);
+                } else {
+                    // Si no hay conexión directa, se inicia como infinito.
+                    dist[i][j] = Integer.MAX_VALUE;
+                }
+            }
+        }
+
+        /*
+        * Triple ciclo de Floyd-Warshall.
+        *
+        * k representa un posible vértice intermedio.
+        * Si ir de i a j pasando por k es más corto que la distancia conocida,
+        * se actualiza la matriz.
+        */
+        for (int k = 0; k < maxV; k++) {
+
+            if (vertices[k] == null) {
+                continue;
+            }
+
+            for (int i = 0; i < maxV; i++) {
+
+                if (vertices[i] == null) {
+                    continue;
+                }
+
+                for (int j = 0; j < maxV; j++) {
+
+                    if (vertices[j] == null) {
+                        continue;
+                    }
+
+                    // Evitamos sumar infinito para no provocar errores de desbordamiento.
+                    if (dist[i][k] != Integer.MAX_VALUE
+                            && dist[k][j] != Integer.MAX_VALUE) {
+
+                        int distanceThroughK = dist[i][k] + dist[k][j];
+
+                        if (distanceThroughK < dist[i][j]) {
+                            dist[i][j] = distanceThroughK;
+                        }
+                    }
+                }
+            }
+        }
+
+        return dist;
+    }
 }
