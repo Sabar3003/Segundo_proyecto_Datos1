@@ -1,0 +1,130 @@
+{
+  "ciudad": {
+    "vertices": [
+      { "id": "V01", "tipo": "DEPOT", "x": 80, "y": 80 },
+      { "id": "V02", "tipo": "INTERSECCION", "x": 180, "y": 70 },
+      { "id": "V03", "tipo": "INTERSECCION", "x": 280, "y": 80 },
+      { "id": "V04", "tipo": "INTERSECCION", "x": 380, "y": 70 },
+      { "id": "V05", "tipo": "ENTREGA", "x": 480, "y": 90 },
+
+      { "id": "V06", "tipo": "INTERSECCION", "x": 90, "y": 170 },
+      { "id": "V07", "tipo": "ENTREGA", "x": 190, "y": 160 },
+      { "id": "V08", "tipo": "INTERSECCION", "x": 290, "y": 170 },
+      { "id": "V09", "tipo": "ENTREGA", "x": 390, "y": 160 },
+      { "id": "V10", "tipo": "INTERSECCION", "x": 500, "y": 180 },
+
+      { "id": "V11", "tipo": "INTERSECCION", "x": 80, "y": 260 },
+      { "id": "V12", "tipo": "ENTREGA", "x": 180, "y": 250 },
+      { "id": "V13", "tipo": "INTERSECCION", "x": 280, "y": 270 },
+      { "id": "V14", "tipo": "ENTREGA", "x": 390, "y": 260 },
+      { "id": "V15", "tipo": "INTERSECCION", "x": 490, "y": 270 },
+
+      { "id": "V16", "tipo": "ENTREGA", "x": 90, "y": 350 },
+      { "id": "V17", "tipo": "INTERSECCION", "x": 190, "y": 360 },
+      { "id": "V18", "tipo": "ENTREGA", "x": 290, "y": 350 },
+      { "id": "V19", "tipo": "INTERSECCION", "x": 390, "y": 360 },
+      { "id": "V20", "tipo": "ENTREGA", "x": 500, "y": 350 },
+
+      { "id": "V21", "tipo": "INTERSECCION", "x": 80, "y": 440 },
+      { "id": "V22", "tipo": "ENTREGA", "x": 180, "y": 450 },
+      { "id": "V23", "tipo": "INTERSECCION", "x": 280, "y": 440 },
+      { "id": "V24", "tipo": "ENTREGA", "x": 390, "y": 450 },
+      { "id": "V25", "tipo": "INTERSECCION", "x": 500, "y": 440 },
+
+      { "id": "V26", "tipo": "INTERSECCION", "x": 90, "y": 530 },
+      { "id": "V27", "tipo": "ENTREGA", "x": 190, "y": 540 },
+      { "id": "V28", "tipo": "INTERSECCION", "x": 290, "y": 530 },
+      { "id": "V29", "tipo": "ENTREGA", "x": 390, "y": 540 },
+      { "id": "V30", "tipo": "INTERSECCION", "x": 500, "y": 530 }
+    ],
+
+    "aristas": [
+      { "u": "V01", "v": "V02", "distancia": 120 },
+      { "u": "V02", "v": "V03", "distancia": 110 },
+      { "u": "V03", "v": "V04", "distancia": 130 },
+      { "u": "V04", "v": "V05", "distancia": 140 },
+
+      { "u": "V06", "v": "V07", "distancia": 105 },
+      { "u": "V07", "v": "V08", "distancia": 115 },
+      { "u": "V08", "v": "V09", "distancia": 125 },
+      { "u": "V09", "v": "V10", "distancia": 135 },
+
+      { "u": "V11", "v": "V12", "distancia": 100 },
+      { "u": "V12", "v": "V13", "distancia": 120 },
+      { "u": "V13", "v": "V14", "distancia": 130 },
+      { "u": "V14", "v": "V15", "distancia": 140 },
+
+      { "u": "V16", "v": "V17", "distancia": 110 },
+      { "u": "V17", "v": "V18", "distancia": 115 },
+      { "u": "V18", "v": "V19", "distancia": 125 },
+      { "u": "V19", "v": "V20", "distancia": 135 },
+
+      { "u": "V21", "v": "V22", "distancia": 100 },
+      { "u": "V22", "v": "V23", "distancia": 120 },
+      { "u": "V23", "v": "V24", "distancia": 130 },
+      { "u": "V24", "v": "V25", "distancia": 140 },
+
+      { "u": "V26", "v": "V27", "distancia": 110 },
+      { "u": "V27", "v": "V28", "distancia": 115 },
+      { "u": "V28", "v": "V29", "distancia": 125 },
+      { "u": "V29", "v": "V30", "distancia": 135 },
+
+      { "u": "V01", "v": "V06", "distancia": 150 },
+      { "u": "V06", "v": "V11", "distancia": 145 },
+      { "u": "V11", "v": "V16", "distancia": 155 },
+      { "u": "V16", "v": "V21", "distancia": 150 },
+      { "u": "V21", "v": "V26", "distancia": 160 },
+
+      { "u": "V02", "v": "V07", "distancia": 140 },
+      { "u": "V07", "v": "V12", "distancia": 150 },
+      { "u": "V12", "v": "V17", "distancia": 145 },
+      { "u": "V17", "v": "V22", "distancia": 155 },
+      { "u": "V22", "v": "V27", "distancia": 150 },
+
+      { "u": "V03", "v": "V08", "distancia": 150 },
+      { "u": "V08", "v": "V13", "distancia": 140 },
+      { "u": "V13", "v": "V18", "distancia": 150 },
+      { "u": "V18", "v": "V23", "distancia": 145 },
+      { "u": "V23", "v": "V28", "distancia": 155 },
+
+      { "u": "V04", "v": "V09", "distancia": 145 },
+      { "u": "V09", "v": "V14", "distancia": 150 },
+      { "u": "V14", "v": "V19", "distancia": 140 },
+      { "u": "V19", "v": "V24", "distancia": 150 },
+      { "u": "V24", "v": "V29", "distancia": 145 },
+
+      { "u": "V05", "v": "V10", "distancia": 150 },
+      { "u": "V10", "v": "V15", "distancia": 155 },
+      { "u": "V15", "v": "V20", "distancia": 145 },
+      { "u": "V20", "v": "V25", "distancia": 150 },
+      { "u": "V25", "v": "V30", "distancia": 160 },
+
+      { "u": "V01", "v": "V07", "distancia": 190 },
+      { "u": "V07", "v": "V13", "distancia": 180 }
+    ]
+  },
+
+  "paquetes": [
+    { "id": "P01", "destino": "V05", "peso": 8, "prioridad": 1 },
+    { "id": "P02", "destino": "V07", "peso": 5, "prioridad": 1 },
+    { "id": "P03", "destino": "V09", "peso": 12, "prioridad": 2 },
+    { "id": "P04", "destino": "V12", "peso": 7, "prioridad": 1 },
+    { "id": "P05", "destino": "V14", "peso": 10, "prioridad": 2 },
+    { "id": "P06", "destino": "V16", "peso": 6, "prioridad": 3 },
+    { "id": "P07", "destino": "V18", "peso": 9, "prioridad": 1 },
+    { "id": "P08", "destino": "V20", "peso": 11, "prioridad": 2 },
+    { "id": "P09", "destino": "V22", "peso": 4, "prioridad": 3 },
+    { "id": "P10", "destino": "V24", "peso": 13, "prioridad": 1 },
+    { "id": "P11", "destino": "V27", "peso": 6, "prioridad": 2 },
+    { "id": "P12", "destino": "V29", "peso": 5, "prioridad": 3 },
+    { "id": "P13", "destino": "V05", "peso": 7, "prioridad": 2 },
+    { "id": "P14", "destino": "V18", "peso": 8, "prioridad": 1 },
+    { "id": "P15", "destino": "V24", "peso": 9, "prioridad": 3 }
+  ],
+
+  "camiones": [
+    { "id": "C01", "capacidad": 35 },
+    { "id": "C02", "capacidad": 40 },
+    { "id": "C03", "capacidad": 30 }
+  ]
+}

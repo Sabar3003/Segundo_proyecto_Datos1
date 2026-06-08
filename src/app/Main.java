@@ -1,121 +1,47 @@
 package app;
 
-import graph.Graph;
-import graph.Vertex;
-import structures.MyPriorityQueue;
-import structures.UnionFind;
+import io.JsonLoader;
+import io.LogisticsData;
+import io.ReportGenerator;
+import ui.MainWindow;
 
 /**
- * Clase principal del proyecto.
+ * Clase principal del proyecto LogisTEC.
  *
- * Por ahora solo se usa para probar que:
- * - Se pueden crear vértices.
- * - Se pueden crear aristas.
- * - El grafo guarda conexiones en ambos sentidos.
- * - Se puede imprimir la lista de adyacencia.
+ * Esta versión carga el caso de prueba desde JSON, genera el reporte en consola
+ * y abre la interfaz gráfica JavaFX.
  */
 public class Main {
 
     public static void main(String[] args) {
 
-        /*
-         * Creamos un grafo con capacidad máxima de 10 vértices.
-         *
-         * Este número es solo para pruebas iniciales.
-         * Más adelante, cuando se cargue desde JSON,
-         * se puede crear con la cantidad real de vértices.
-         */
-        Graph graph = new Graph(10);
+        try {
+            /*
+             * Ruta relativa del archivo JSON.
+             */
+            String filePath = "data/caso_minimo.json";
 
-        /*
-         * Agregamos vértices.
-         *
-         * A será el depósito.
-         * B y C serán intersecciones.
-         * D y E serán puntos de entrega.
-         */
-        graph.addVertex(new Vertex("A", "DEPOT", 100, 100));
-        graph.addVertex(new Vertex("B", "INTERSECCION", 200, 120));
-        graph.addVertex(new Vertex("C", "INTERSECCION", 300, 160));
-        graph.addVertex(new Vertex("D", "ENTREGA", 400, 200));
-        graph.addVertex(new Vertex("E", "ENTREGA", 500, 250));
+            /*
+             * Cargamos los datos principales del caso.
+             */
+            LogisticsData data = JsonLoader.load(filePath);
 
-        /*
-         * Agregamos aristas.
-         *
-         * Como el grafo es no dirigido, cuando agregamos A-B,
-         * internamente también se guarda B-A.
-         */
-        graph.addEdge("A", "B", 320);
-        graph.addEdge("B", "C", 250);
-        graph.addEdge("C", "D", 180);
-        graph.addEdge("D", "E", 210);
-        graph.addEdge("A", "E", 900);
+            /*
+             * Generamos el reporte en consola.
+             *
+             * Este reporte también ejecuta la asignación de paquetes a camiones.
+             */
+            ReportGenerator.generateFullReport(data);
 
-        /*
-         * Imprimimos el grafo para revisar la lista de adyacencia.
-         */
-        graph.printGraph();
+            /*
+             * Abrimos la ventana gráfica.
+             */
+            MainWindow.launchWindow(data);
 
-        /*
-         * Probamos el método getWeight.
-         *
-         * A-B sí existe directamente, entonces debe retornar 320.
-         * A-C no existe directamente, entonces debe retornar -1.
-         */
-        System.out.println();
-        System.out.println("Peso entre A y B: " + graph.getWeight("A", "B"));
-        System.out.println("Peso entre A y C: " + graph.getWeight("A", "C"));
-
-        /*
-         * Prueba de cola de prioridad.
-         *
-         * Debe extraer primero el elemento con menor prioridad.
-         */
-        System.out.println();
-        System.out.println("Prueba MyPriorityQueue:");
-        MyPriorityQueue<String> pq = new MyPriorityQueue<>(10);
-
-        pq.insert("A", 30);
-        pq.insert("B", 10);
-        pq.insert("C", 20);
-
-        System.out.println(pq.extractMin()); // Debe imprimir B
-        System.out.println(pq.extractMin()); // Debe imprimir C
-        System.out.println(pq.extractMin()); // Debe imprimir A
-
-        /*
-         * Prueba de UnionFind.
-         *
-         * Sirve para verificar si dos elementos pertenecen al mismo conjunto.
-         */
-        System.out.println();
-        System.out.println("Prueba UnionFind:");
-        UnionFind uf = new UnionFind(5);
-
-        uf.union(0, 1);
-        uf.union(1, 2);
-
-        System.out.println(uf.connected(0, 2)); // true
-        System.out.println(uf.connected(0, 4)); // false
-
-        // PRUEBAS DE BFS Y DFS
-        System.out.println("\n=================================");
-        System.out.println("   PRUEBAS DE RECORRIDOS   ");
-        System.out.println("=================================");
-        // Ejecutamos desde el nodo inicial "A" (El depósito)
-        System.out.println("Ejecutando desde el depósito (A):");
-        algorithms.GraphAlgorithms.bfs(graph, "A");
-        algorithms.GraphAlgorithms.dfs(graph, "A");
-
-        //  PRUEBAS DE WARSHALL
-        graph.addVertex(new Vertex("X", "ENTREGA", 600, 600));  // Agregamos un nodo trampa que no conectamos con nadie
-        algorithms.GraphAlgorithms.warshall(graph, "A"); // Llamamos al algoritmo pasándole el depósito "A"
-
-        // PRUEBAS DE DIJKSTRA
-        algorithms.GraphAlgorithms.dijkstra(graph, "A"); // Ejecutamos Dijkstra desde el depósito central "A"
-
-        // PRUEBAS DE FLOYD-WARSHALL
-        algorithms.GraphAlgorithms.floydWarshall(graph);
+        } catch (Exception exception) {
+            System.out.println("Error al ejecutar LogisTEC:");
+            System.out.println(exception.getMessage());
+            exception.printStackTrace();
+        }
     }
 }
