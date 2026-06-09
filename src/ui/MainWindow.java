@@ -87,7 +87,7 @@ public class MainWindow extends Application {
             Image backgroundImage = new Image("file:src/ui/assets/fondopringrafo.png");
             ImageView backgroundView = new ImageView(backgroundImage);
 
-            backgroundView.setPreserveRatio(true);
+            backgroundView.setPreserveRatio(false);
             backgroundView.fitWidthProperty().bind(rootContainer.widthProperty());
             backgroundView.fitHeightProperty().bind(rootContainer.heightProperty());
             backgroundView.setOpacity(1.0);
