@@ -6,7 +6,10 @@ import io.LogisticsData;
 import model.Package;
 import model.RouteResult;
 import model.Truck;
-
+import algorithms.GraphAlgorithms;
+import model.ShortestPathResult;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
@@ -33,7 +36,12 @@ public class InfoPanel extends ScrollPane {
      * @param routes rutas recomendadas para los camiones.
      * @param mstResult resultado del MST que se muestra en el grafo.
      */
-    public InfoPanel(LogisticsData data, RouteResult[] routes, MSTResult mstResult) {
+    public InfoPanel(
+            LogisticsData data,
+            RouteResult[] routes,
+            MSTResult mstResult,
+            GraphPane graphPane
+    ) {
 
         /*
          * VBox funciona como una columna vertical.
@@ -52,6 +60,7 @@ public class InfoPanel extends ScrollPane {
 
         addHeader(content);
         addGeneralSummary(content, data);
+        addShortestPathQuery(content, data, graphPane);
         addMSTSummary(content, mstResult);
         addTrucks(content, data.getTrucks());
         addRoutes(content, routes);
@@ -73,6 +82,120 @@ public class InfoPanel extends ScrollPane {
                         "-fx-background-color: #ECEFF1;" +
                         "-fx-border-color: transparent;"
         );
+    }
+
+    /**
+     * Agrega una sección para consultar el camino mínimo con Dijkstra.
+     *
+     * El usuario selecciona:
+     * - Origen.
+     * - Destino.
+     *
+     * Luego presiona un botón y se muestra:
+     * - Camino mínimo.
+     * - Distancia total.
+     *
+     * Además, el camino se resalta visualmente en el GraphPane.
+     *
+     * @param content contenedor principal.
+     * @param data datos del proyecto.
+     * @param graphPane panel del grafo que se debe actualizar.
+     */
+    private void addShortestPathQuery(
+            VBox content,
+            LogisticsData data,
+            GraphPane graphPane
+    ) {
+        VBox card = createCard();
+
+        card.getChildren().add(createSectionTitle("Consulta de camino mínimo"));
+
+        ComboBox<String> originComboBox = new ComboBox<>();
+        ComboBox<String> destinationComboBox = new ComboBox<>();
+
+        /*
+         * Se llenan los selectores con todos los vértices del grafo.
+         */
+        Graph graph = data.getGraph();
+
+        for (int i = 0; i < graph.getVertexCount(); i++) {
+            String vertexId = graph.getVertex(i).getId();
+
+            originComboBox.getItems().add(vertexId);
+            destinationComboBox.getItems().add(vertexId);
+        }
+
+        /*
+         * Valores por defecto para que sea más cómodo probar.
+         */
+        originComboBox.setValue(data.getDepotId());
+
+        if (graph.getVertexCount() > 1) {
+            destinationComboBox.setValue(graph.getVertex(1).getId());
+        }
+
+        originComboBox.setMaxWidth(Double.MAX_VALUE);
+        destinationComboBox.setMaxWidth(Double.MAX_VALUE);
+
+        Label originLabel = createText("Origen:");
+        Label destinationLabel = createText("Destino:");
+
+        Label resultLabel = createRouteText(
+                "Seleccione origen y destino, luego presione Calcular camino mínimo."
+        );
+
+        Button calculateButton = new Button("Calcular camino mínimo");
+
+        calculateButton.setStyle(
+                "-fx-font-size: 12px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-color: #1565C0;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-padding: 8;" +
+                        "-fx-background-radius: 8;"
+        );
+
+        /*
+         * Acción del botón.
+         * Aquí se ejecuta Dijkstra para el origen y destino seleccionados.
+         */
+        calculateButton.setOnAction(event -> {
+            String originId = originComboBox.getValue();
+            String destinationId = destinationComboBox.getValue();
+
+            ShortestPathResult result =
+                    GraphAlgorithms.shortestPath(graph, originId, destinationId);
+
+            /*
+             * Se actualiza el dibujo del grafo para resaltar el camino.
+             */
+            graphPane.setShortestPathResult(result);
+
+            if (!result.isReachable()) {
+                resultLabel.setText(
+                        "No existe camino entre "
+                                + originId + " y " + destinationId + "."
+                );
+                return;
+            }
+
+            resultLabel.setText(
+                    "Camino:\n"
+                            + result.getPathAsText()
+                            + "\n\nDistancia: "
+                            + result.getTotalDistance()
+                            + " m"
+            );
+        });
+
+        card.getChildren().add(originLabel);
+        card.getChildren().add(originComboBox);
+        card.getChildren().add(destinationLabel);
+        card.getChildren().add(destinationComboBox);
+        card.getChildren().add(calculateButton);
+        card.getChildren().add(resultLabel);
+
+        content.getChildren().add(card);
     }
 
     /**

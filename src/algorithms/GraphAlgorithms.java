@@ -7,6 +7,7 @@ import structures.MyQueue;
 import structures.MyPriorityQueue;
 import structures.MyLinkedList;
 import structures.Node;
+import model.ShortestPathResult;
 
 /**
  * Clase GraphAlgorithms
@@ -482,5 +483,168 @@ public class GraphAlgorithms {
         }
 
         return dist;
+    }
+    /**
+     * Calcula el camino mínimo entre un origen y un destino usando Dijkstra.
+     *
+     * Este metodo retorna un ShortestPathResult para que la interfaz gráfica pueda:
+     * - Mostrar el camino.
+     * - Mostrar la distancia.
+     * - Resaltar visualmente el camino en el grafo.
+     *
+     * @param graph grafo de la ciudad.
+     * @param startId id del vértice origen.
+     * @param targetId id del vértice destino.
+     * @return resultado del camino mínimo.
+     */
+    public static ShortestPathResult shortestPath(
+            Graph graph,
+            String startId,
+            String targetId
+    ) {
+        int maxV = graph.getMaxVertices();
+        Vertex[] vertices = graph.getVertices();
+
+        /*
+         * Creamos el resultado desde el inicio.
+         * Si algo falla, se retorna como no alcanzable.
+         */
+        ShortestPathResult result =
+                new ShortestPathResult(startId, targetId, graph.getVertexCount());
+
+        /*
+         * Buscamos los índices internos del origen y destino.
+         */
+        int startIndex = indexOf(vertices, maxV, startId);
+        int targetIndex = indexOf(vertices, maxV, targetId);
+
+        if (startIndex == -1 || targetIndex == -1) {
+            return result;
+        }
+
+        /*
+         * Arreglos clásicos de Dijkstra:
+         * distances guarda la distancia mínima conocida.
+         * predecessors guarda el vértice anterior para reconstruir el camino.
+         * visited marca los vértices ya procesados definitivamente.
+         */
+        int[] distances = new int[maxV];
+        String[] predecessors = new String[maxV];
+        boolean[] visited = new boolean[maxV];
+
+        for (int i = 0; i < maxV; i++) {
+            distances[i] = Integer.MAX_VALUE;
+            predecessors[i] = null;
+            visited[i] = false;
+        }
+
+        /*
+         * La distancia desde el origen hacia sí mismo es 0.
+         */
+        distances[startIndex] = 0;
+
+        /*
+         * Cola de prioridad propia del proyecto.
+         * Se usa para procesar siempre el vértice con menor distancia acumulada.
+         */
+        MyPriorityQueue<String> priorityQueue = new MyPriorityQueue<>(maxV * maxV);
+        priorityQueue.insert(startId, 0);
+
+        /*
+         * Ciclo principal de Dijkstra.
+         */
+        while (!priorityQueue.isEmpty()) {
+            String currentId = priorityQueue.extractMin();
+            int currentIndex = indexOf(vertices, maxV, currentId);
+
+            if (currentIndex == -1 || visited[currentIndex]) {
+                continue;
+            }
+
+            visited[currentIndex] = true;
+
+            /*
+             * Si ya llegamos al destino, podemos detenernos.
+             * Dijkstra garantiza que esta distancia ya es la mínima.
+             */
+            if (currentId.equals(targetId)) {
+                break;
+            }
+
+            /*
+             * Revisamos todos los vértices para encontrar vecinos directos.
+             */
+            for (int neighborIndex = 0; neighborIndex < maxV; neighborIndex++) {
+                if (vertices[neighborIndex] == null || visited[neighborIndex]) {
+                    continue;
+                }
+
+                String neighborId = vertices[neighborIndex].getId();
+
+                if (graph.hasEdge(currentId, neighborId)) {
+                    int weight = graph.getWeight(currentId, neighborId);
+
+                    /*
+                     * Evitamos sumar infinito.
+                     */
+                    if (distances[currentIndex] == Integer.MAX_VALUE) {
+                        continue;
+                    }
+
+                    int alternativeDistance = distances[currentIndex] + weight;
+
+                    /*
+                     * Si encontramos una ruta más corta hacia el vecino,
+                     * actualizamos distancia y predecesor.
+                     */
+                    if (alternativeDistance < distances[neighborIndex]) {
+                        distances[neighborIndex] = alternativeDistance;
+                        predecessors[neighborIndex] = currentId;
+                        priorityQueue.insert(neighborId, alternativeDistance);
+                    }
+                }
+            }
+        }
+
+        /*
+         * Si la distancia del destino sigue en infinito, no existe camino.
+         */
+        if (distances[targetIndex] == Integer.MAX_VALUE) {
+            result.setReachable(false);
+            return result;
+        }
+
+        /*
+         * Si sí existe camino, guardamos la distancia total.
+         */
+        result.setReachable(true);
+        result.setTotalDistance(distances[targetIndex]);
+
+        /*
+         * Reconstruimos el camino desde el destino hacia atrás usando predecessors.
+         * Primero se guarda al revés en reversePath.
+         */
+        String[] reversePath = new String[graph.getVertexCount()];
+        int reverseCount = 0;
+
+        String currentId = targetId;
+
+        while (currentId != null) {
+            reversePath[reverseCount] = currentId;
+            reverseCount++;
+
+            int currentIndex = indexOf(vertices, maxV, currentId);
+            currentId = predecessors[currentIndex];
+        }
+
+        /*
+         * Ahora pasamos el camino al resultado en el orden correcto:
+         * origen -> ... -> destino.
+         */
+        for (int i = reverseCount - 1; i >= 0; i--) {
+            result.addPathVertex(reversePath[i]);
+        }
+
+        return result;
     }
 }
