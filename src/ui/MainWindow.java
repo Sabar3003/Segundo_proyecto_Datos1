@@ -9,13 +9,15 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model.RouteResult;
 import model.Truck;
 import planner.RoutePlanner;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 
 /**
  * Clase MainWindow.
@@ -65,37 +67,45 @@ public class MainWindow extends Application {
     }
 
     /**
-     * Muestra la pantalla inicial de la aplicación.
+     * Muestra la pantalla inicial de la aplicación con la imagen de fondo integrada.
+     * Mantiene únicamente el botón interactivo sobre el diseño.
      *
-     * Esta pantalla contiene:
-     * - Nombre del proyecto.
-     * - Descripción corta.
-     * - Botón para abrir la visualización del grafo.
+     * @param stage ventana principal.
+     */
+    /**
+     * Muestra la pantalla inicial de la aplicación con la imagen de fondo integrada.
+     * Ubica el botón verde de forma personalizada sobre el cajón del camión.
      *
      * @param stage ventana principal.
      */
     private void showWelcomeScene(Stage stage) {
-        VBox root = new VBox(25);
+        // 1. Contenedor raíz para apilar la imagen y los componentes
+        StackPane rootContainer = new StackPane();
 
-        root.setAlignment(Pos.CENTER);
-        root.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #263238, #455A64);" +
-                        "-fx-padding: 40;"
-        );
+        try {
+            // 2. Cargar la imagen editada desde la ruta física del proyecto
+            Image backgroundImage = new Image("file:src/ui/assets/fondopringrafo.png");
+            ImageView backgroundView = new ImageView(backgroundImage);
 
-        Label title = new Label("LogisTEC");
-        title.setStyle(
-                "-fx-font-size: 54px;" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-text-fill: white;"
-        );
+            backgroundView.setPreserveRatio(false);
+            backgroundView.fitWidthProperty().bind(rootContainer.widthProperty());
+            backgroundView.fitHeightProperty().bind(rootContainer.heightProperty());
+            backgroundView.setOpacity(1.0);
 
-        Label subtitle = new Label("Sistema de planificación logística sobre grafos");
-        subtitle.setStyle(
-                "-fx-font-size: 18px;" +
-                        "-fx-text-fill: #ECEFF1;"
-        );
+            rootContainer.getChildren().add(backgroundView);
+            rootContainer.setStyle("-fx-background-color: #263238;");
 
+        } catch (Exception e) {
+            System.out.println("Alerta: No se pudo cargar la imagen de fondo.");
+            System.out.println("Detalle: " + e.getMessage());
+            rootContainer.setStyle("-fx-background-color: linear-gradient(to bottom, #263238, #455A64);");
+        }
+
+        // 3. Contenedor exclusivo para el botón (usamos StackPane interno para control total de posición)
+        StackPane componentLayout = new StackPane();
+        componentLayout.setStyle("-fx-background-color: transparent;");
+
+        // 4. Configuración del botón verde original
         Button visualizeButton = new Button("Visualizar grafo");
         visualizeButton.setStyle(
                 "-fx-font-size: 18px;" +
@@ -107,19 +117,30 @@ public class MainWindow extends Application {
         );
 
         /*
+         * AJUSTE DE POSICIÓN DINÁMICA (Efecto sticker en el camión)
+         * - setTranslateY: Mueve el botón hacia abajo (valores positivos bajan el elemento).
+         * - setTranslateX: Mueve el botón a la derecha (valores positivos mueven a la derecha).
+         */
+        visualizeButton.setTranslateY(150); // Lo baja bastante para meterlo en el cajón blanco
+        visualizeButton.setTranslateX(45);  // Lo mueve un poquito a la derecha para centrarlo con el cajón
+
+        /*
          * Cuando se presiona el botón, se cambia a la pantalla del grafo.
          */
         visualizeButton.setOnAction(event -> showGraphScene(stage));
 
-        root.getChildren().addAll(title, subtitle, visualizeButton);
+        // 5. Agregamos el botón al layout transparente
+        componentLayout.getChildren().add(visualizeButton);
 
-        Scene scene = new Scene(root, 1150, 700);
+        // 6. Colocamos el layout del botón sobre la capa de la imagen
+        rootContainer.getChildren().add(componentLayout);
+
+        Scene scene = new Scene(rootContainer, 1150, 700);
 
         stage.setTitle("LogisTEC");
         stage.setScene(scene);
         stage.show();
     }
-
     /**
      * Muestra la pantalla donde se visualiza el grafo, rutas, MST y paquetes.
      *

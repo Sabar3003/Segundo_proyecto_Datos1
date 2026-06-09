@@ -97,9 +97,7 @@ public class GraphPane extends Canvas {
     }
     /**
      * Dibuja el camino mínimo consultado con Dijkstra.
-     *
      * El camino se muestra con una línea celeste gruesa.
-     *
      * @param gc contexto gráfico.
      */
     private void drawShortestPath(GraphicsContext gc) {

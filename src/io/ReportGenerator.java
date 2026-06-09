@@ -353,6 +353,24 @@ public class ReportGenerator {
         }
     }
 
+    public static void mostrarConsultaDijkstra(graph.Graph graph, String origen, String destino) {
+        model.ShortestPathResult result = algorithms.GraphAlgorithms.dijkstraPath(graph, origen, destino);
+
+        System.out.println("\n==================================================");
+        System.out.println("   CONSULTA DE CAMINO MINIMO CON DIJKSTRA");
+        System.out.println("==================================================");
+        System.out.println("Origen:  " + result.getOrigin());
+        System.out.println("Destino: " + result.getDestination());
+        System.out.println("Camino:  " + result.getFormattedPath());
+
+        if (result.getTotalDistance() == Integer.MAX_VALUE) {
+            System.out.println("Distancia: INALCANZABLE");
+        } else {
+            System.out.println("Distancia: " + result.getTotalDistance() + " m");
+            System.out.println("Cantidad de vértices del camino: " + result.getVertexCount());
+        }
+    }
+
     /**
      * Compara dos rutas y muestra cuál tiene menor distancia total.
      *

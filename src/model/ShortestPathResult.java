@@ -1,170 +1,154 @@
 package model;
 
+// Importación explícita de tu lista enlazada personalizada
+import structures.MyLinkedList;
+
 /**
- * Clase ShortestPathResult.
- *
- * Esta clase guarda el resultado de una consulta de camino mínimo.
- *
- * Guarda:
- * - El vértice origen.
- * - El vértice destino.
- * - El camino en orden.
- * - La cantidad real de vértices del camino.
- * - La distancia total.
- * - Si el destino es alcanzable o no.
+ * Clase ShortestPathResult
+ * Modela el resultado de un cálculo de ruta óptima en el grafo.
+ * Garantiza compatibilidad absoluta con MyLinkedList, ReportGenerator, GraphPane e InfoPanel.
  */
 public class ShortestPathResult {
-
-    // Id del vértice origen.
-    private String originId;
-
-    // Id del vértice destino.
-    private String destinationId;
-
-    // Arreglo con los vértices del camino en orden.
-    private String[] path;
-
-    // Cantidad real de vértices dentro del camino.
-    private int pathCount;
-
-    // Distancia total del camino mínimo.
+    private String origin;
+    private String destination;
     private int totalDistance;
-
-    // Indica si el destino se pudo alcanzar desde el origen.
     private boolean reachable;
 
+    // Almacenamiento interno unificado como arreglo para facilitar el pintado en UI
+    private String[] pathArray;
+    private int vertexCount;
+
     /**
-     * Constructor de ShortestPathResult.
-     *
-     * @param originId id del origen.
-     * @param destinationId id del destino.
-     * @param maxPathSize cantidad máxima posible de vértices en el camino.
+     * CONSTRUCTOR 1: Inicialización por tamaño máximo (Algoritmos con mallas o arreglos fijos)
      */
-    public ShortestPathResult(String originId, String destinationId, int maxPathSize) {
-        this.originId = originId;
-        this.destinationId = destinationId;
-        this.path = new String[maxPathSize];
-        this.pathCount = 0;
+    public ShortestPathResult(String origin, String destination, int maxVertices) {
+        this.origin = origin;
+        this.destination = destination;
         this.totalDistance = Integer.MAX_VALUE;
         this.reachable = false;
+        this.pathArray = new String[maxVertices > 0 ? maxVertices : 100];
+        this.vertexCount = 0;
     }
 
     /**
-     * Agrega un vértice al camino.
-     *
-     * @param vertexId id del vértice que se desea agregar.
-     * @return true si se agregó correctamente.
+     * CONSTRUCTOR 2: Adaptador directo para estructuras de tipo MyLinkedList<String>
+     * Resuelve el error de tipos incompatibles en GraphAlgorithms.java (Línea 526)
      */
-    public boolean addPathVertex(String vertexId) {
-        if (pathCount >= path.length) {
-            return false;
-        }
-
-        path[pathCount] = vertexId;
-        pathCount++;
-
-        return true;
-    }
-
-    /**
-     * Retorna el origen del camino.
-     *
-     * @return id del origen.
-     */
-    public String getOriginId() {
-        return originId;
-    }
-
-    /**
-     * Retorna el destino del camino.
-     *
-     * @return id del destino.
-     */
-    public String getDestinationId() {
-        return destinationId;
-    }
-
-    /**
-     * Retorna el arreglo del camino.
-     *
-     * Importante:
-     * El arreglo puede tener posiciones null al final.
-     * Para recorrerlo correctamente se debe usar pathCount.
-     *
-     * @return arreglo del camino.
-     */
-    public String[] getPath() {
-        return path;
-    }
-
-    /**
-     * Retorna cuántos vértices reales tiene el camino.
-     *
-     * @return cantidad de vértices en el camino.
-     */
-    public int getPathCount() {
-        return pathCount;
-    }
-
-    /**
-     * Retorna la distancia total.
-     *
-     * @return distancia total en metros.
-     */
-    public int getTotalDistance() {
-        return totalDistance;
-    }
-
-    /**
-     * Cambia la distancia total.
-     *
-     * @param totalDistance distancia calculada por Dijkstra.
-     */
-    public void setTotalDistance(int totalDistance) {
+    public ShortestPathResult(String origin, String destination, int totalDistance, MyLinkedList<String> finalPath, int vertexCounter) {
+        this.origin = origin;
+        this.destination = destination;
         this.totalDistance = totalDistance;
+        this.reachable = (totalDistance != Integer.MAX_VALUE && finalPath != null && vertexCounter > 0);
+        this.vertexCount = vertexCounter;
+
+        // Pasamos los elementos de MyLinkedList al arreglo interno secuencialmente
+        if (finalPath != null && vertexCounter > 0) {
+            this.pathArray = new String[vertexCounter];
+            for (int i = 0; i < vertexCounter; i++) {
+                // Se asume que MyLinkedList cuenta con un método .get(index) estándar
+                this.pathArray[i] = finalPath.get(i);
+            }
+        } else {
+            this.pathArray = new String[0];
+            this.vertexCount = 0;
+        }
     }
 
-    /**
-     * Indica si el destino es alcanzable desde el origen.
-     *
-     * @return true si hay camino.
-     */
-    public boolean isReachable() {
-        return reachable;
-    }
+    // ==========================================
+    // MÉTODOS DE LLENADO DINÁMICO
+    // ==========================================
 
-    /**
-     * Cambia el estado de alcanzabilidad.
-     *
-     * @param reachable true si el camino existe.
-     */
     public void setReachable(boolean reachable) {
         this.reachable = reachable;
     }
 
+    public void setTotalDistance(int totalDistance) {
+        this.totalDistance = totalDistance;
+    }
+
+    public void addPathVertex(String vertexId) {
+        if (pathArray == null || pathArray.length == 0) {
+            pathArray = new String[100];
+        }
+        if (vertexCount < pathArray.length) {
+            pathArray[vertexCount] = vertexId;
+            vertexCount++;
+        }
+    }
+
+    // ==========================================
+    // INTERFAZ DE COMPATIBILIDAD CON LA UI Y REPORTES
+    // ==========================================
+
     /**
-     * Convierte el camino a texto.
-     *
-     * Ejemplo:
-     * V01 -> V07 -> V13 -> V24
-     *
-     * @return camino en formato texto.
+     * Verifica si la ruta es accesible (Línea 104 de GraphPane)
+     */
+    public boolean isReachable() {
+        return this.reachable;
+    }
+
+    /**
+     * Retorna la cantidad de vértices procesados en la ruta (Línea 118 de GraphPane)
+     */
+    public int getPathCount() {
+        return this.vertexCount;
+    }
+
+    /**
+     * Alias de conteo para ReportGenerator (Línea 370)
+     */
+    public int getVertexCount() {
+        return this.vertexCount;
+    }
+
+    /**
+     * Retorna el arreglo nativo purgado que GraphPane necesita para dibujar (Línea 108 de GraphPane)
+     */
+    public String[] getPath() {
+        if (!reachable || vertexCount == 0 || pathArray == null) {
+            return new String[0];
+        }
+        // Si el tamaño coincide de forma exacta, lo retorna directamente; si no, lo recorta
+        if (pathArray.length == vertexCount) {
+            return pathArray;
+        }
+        String[] exactPath = new String[vertexCount];
+        System.arraycopy(pathArray, 0, exactPath, 0, vertexCount);
+        return exactPath;
+    }
+
+    /**
+     * Genera la hilera formateada de la ruta para el cuadro visual (Línea 184 de InfoPanel)
      */
     public String getPathAsText() {
-        if (!reachable || pathCount == 0) {
-            return "No existe camino.";
+        if (!reachable || vertexCount == 0 || pathArray == null) {
+            return "No existe camino entre " + origin + " y " + destination + ".";
         }
 
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < pathCount; i++) {
-            builder.append(path[i]);
-
-            if (i < pathCount - 1) {
-                builder.append(" -> ");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < vertexCount; i++) {
+            if (pathArray[i] != null) {
+                sb.append(pathArray[i]);
+                if (i < vertexCount - 1) {
+                    sb.append(" -> ");
+                }
             }
         }
-
-        return builder.toString();
+        return sb.toString();
     }
+
+    /**
+     * Variante de formato de texto para ReportGenerator
+     */
+    public String getFormattedPath() {
+        return getPathAsText();
+    }
+
+    // ==========================================
+    // GETTERS BÁSICOS
+    // ==========================================
+
+    public String getOrigin() { return origin; }
+    public String getDestination() { return destination; }
+    public int getTotalDistance() { return totalDistance; }
 }
