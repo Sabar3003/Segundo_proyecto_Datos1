@@ -165,7 +165,8 @@ public class MainWindow extends Application {
         InfoPanel infoPanel = new InfoPanel(
                 logisticsData,
                 recommendedRoutes,
-                mstResult
+                mstResult,
+                graphPane
         );
 
         BorderPane root = new BorderPane();
