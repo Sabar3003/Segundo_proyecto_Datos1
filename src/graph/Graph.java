@@ -81,10 +81,12 @@ public class Graph {
      * from -> to
      * to -> from
      *
+     * También se evita agregar aristas duplicadas.
+     *
      * @param from id del primer vértice.
      * @param to id del segundo vértice.
      * @param weight peso de la arista.
-     * @return true si la arista se agregó correctamente.
+     * @return true si la arista se agregó correctamente, false si no se pudo.
      */
     public boolean addEdge(String from, String to, int weight) {
 
@@ -99,6 +101,12 @@ public class Graph {
 
         // El peso debe ser positivo.
         if (weight <= 0) {
+            return false;
+        }
+
+        // Evitamos aristas duplicadas.
+        // Si ya existe conexión directa entre from y to, no la agregamos otra vez.
+        if (hasEdge(from, to)) {
             return false;
         }
 
@@ -289,5 +297,32 @@ public class Graph {
      */
     public Vertex[] getVertices() {
         return vertices;
+    }
+
+    /**
+     * Retorna la cantidad de aristas únicas del grafo.
+     *
+     * Como el grafo es no dirigido, cada arista se guarda dos veces
+     * en la lista de adyacencia:
+     *
+     * A -> B
+     * B -> A
+     *
+     * Por eso se cuentan todas las conexiones y al final se divide entre 2.
+     *
+     * @return cantidad de aristas únicas.
+     */
+    public int getEdgeCount() {
+        int totalConnections = 0;
+
+        // Recorremos todos los vértices reales del grafo.
+        for (int i = 0; i < vertexCount; i++) {
+
+            // Sumamos la cantidad de vecinos de cada vértice.
+            totalConnections += adjacencyList[i].size();
+        }
+
+        // Como cada arista aparece dos veces, dividimos entre 2.
+        return totalConnections / 2;
     }
 }

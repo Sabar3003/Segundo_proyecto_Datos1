@@ -10,7 +10,7 @@ import model.RouteResult;
 import model.Truck;
 import structures.MyLinkedList;
 import structures.Node;
-
+import model.ShortestPathResult;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -49,6 +49,9 @@ public class GraphPane extends Canvas {
     // Camiones con paquetes ya asignados.
     private Truck[] trucks;
 
+    // Resultado de Dijkstra que se desea resaltar en el mapa.
+    private ShortestPathResult shortestPathResult;
+
     /**
      * Constructor de GraphPane.
      *
@@ -77,6 +80,63 @@ public class GraphPane extends Canvas {
     }
 
     /**
+     * Actualiza el camino mínimo que debe resaltarse en el grafo.
+     *
+     * Este metodo se llama desde InfoPanel cuando el usuario presiona
+     * el botón "Calcular camino mínimo".
+     *
+     * @param shortestPathResult resultado de Dijkstra.
+     */
+    public void setShortestPathResult(ShortestPathResult shortestPathResult) {
+        this.shortestPathResult = shortestPathResult;
+
+        /*
+         * Se vuelve a dibujar el grafo para que aparezca el nuevo camino.
+         */
+        drawGraph();
+    }
+    /**
+     * Dibuja el camino mínimo consultado con Dijkstra.
+     *
+     * El camino se muestra con una línea celeste gruesa.
+     *
+     * @param gc contexto gráfico.
+     */
+    private void drawShortestPath(GraphicsContext gc) {
+        if (shortestPathResult == null || !shortestPathResult.isReachable()) {
+            return;
+        }
+
+        String[] path = shortestPathResult.getPath();
+
+        gc.setStroke(Color.CYAN);
+        gc.setLineWidth(7);
+        gc.setGlobalAlpha(0.9);
+
+        /*
+         * Se dibuja cada segmento del camino:
+         * path[0] -> path[1] -> path[2] -> ...
+         */
+        for (int i = 0; i < shortestPathResult.getPathCount() - 1; i++) {
+            Vertex fromVertex = graph.getVertexById(path[i]);
+            Vertex toVertex = graph.getVertexById(path[i + 1]);
+
+            if (fromVertex == null || toVertex == null) {
+                continue;
+            }
+
+            gc.strokeLine(
+                    fromVertex.getX(),
+                    fromVertex.getY(),
+                    toVertex.getX(),
+                    toVertex.getY()
+            );
+        }
+
+        gc.setGlobalAlpha(1.0);
+    }
+
+    /**
      * Dibuja todo el mapa.
      */
     public void drawGraph() {
@@ -88,6 +148,7 @@ public class GraphPane extends Canvas {
         drawEdges(gc);
         drawMST(gc);
         drawRoutes(gc);
+        drawShortestPath(gc);
         drawVertices(gc);
         drawLegend(gc);
     }
