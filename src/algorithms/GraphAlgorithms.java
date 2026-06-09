@@ -205,6 +205,25 @@ public class GraphAlgorithms {
         }
         return P; // Retornamos la matriz por si se ocupa en otra parte
     }
+    /**
+     * METODO AUXILIAR DE CONECTIVIDAD WARSHALL
+     * Permite consultar de forma rápida si existe un camino válido entre el depósito y un destino.
+     * @param matrixWarshall La matriz booleana generada previamente por el metodo warshall().
+     * @param graph          El grafo de la ciudad.
+     * @param depotId        ID del depósito central (ej. "V01").
+     * @param targetId       ID del nodo destino del paquete (ej. "V24").
+     * @return true si el destino es alcanzable, false si está aislado.
+     */
+    public static boolean isTargetAccessible(boolean[][] matrixWarshall, Graph graph, String depotId, String targetId) {
+        int depotIndex = findVertexIndex(graph, depotId);
+        int targetIndex = findVertexIndex(graph, targetId);
+        // Si alguno de los dos nodos no existe en el mapa, por seguridad es inalcanzable
+        if (depotIndex == -1 || targetIndex == -1) {
+            return false;
+        }
+        // Retorna el estado de conectividad calculado por Warshall
+        return matrixWarshall[depotIndex][targetIndex];
+    }
 
     /**
      * IMPLEMENTACIÓN DEL ALGORITMO DE DIJKSTRA
@@ -394,9 +413,120 @@ public class GraphAlgorithms {
             System.out.println(); // Salto a la siguiente fila
         }
     }
+    /**
+     * CONSULTA DIRECTA DE DIJKSTRA ORIGEN-DESTINO
+     * * Aplica el algoritmo de Dijkstra optimizado con una cola de prioridad mínima basada en Heap
+     * para encontrar de forma eficiente el camino más corto entre dos vértices específicos.
+     * Implementa un mecanismo de rastreo inverso mediante un arreglo de predecesores respaldado
+     * por una estructura LIFO (Pila) propia para asegurar el orden cronológico correcto.
+     * @param graph    El grafo no dirigido y ponderado representativo de la red vial.
+     * @param startId  Identificador alfanumérico del nodo origen (ej. "V01").
+     * @param endId    Identificador alfanumérico del nodo destino (ej. "V24").
+     * @return         Un objeto ShortestPathResult que encapsula las métricas completas de la ruta óptima.
+     */
+    public static model.ShortestPathResult dijkstraPath(Graph graph, String startId, String endId) {
+        int maxV = graph.getMaxVertices();
+        Vertex[] vertices = graph.getVertices();
+
+        // Estructuras de control del estado dinámico de Dijkstra
+        int[] distances = new int[maxV];          // Guarda la distancia mínima conocida desde el origen a cada índice
+        String[] predecessors = new String[maxV];  // Guarda el ID del nodo previo para la posterior reconstrucción de la ruta
+        boolean[] visited = new boolean[maxV];     // Arreglo de banderas para evitar el reprocesamiento de nodos ya optimizados
+
+        // Inicialización matemática (Establecer distancias iniciales en infinito técnico)
+        for (int i = 0; i < maxV; i++) {
+            distances[i] = Integer.MAX_VALUE;
+            predecessors[i] = null;
+            visited[i] = false;
+        }
+        // Mapeo seguro de los IDs alfanuméricos a índices enteros del arreglo base del grafo
+        int startIndex = indexOf(vertices, maxV, startId);
+        int endIndex = indexOf(vertices, maxV, endId);
+
+        // Cláusula de seguridad: Si alguno de los nodos no existe en el mapa vial, aborta con estado infinito
+        if (startIndex == -1 || endIndex == -1) {
+            return new model.ShortestPathResult(startId, endId, Integer.MAX_VALUE, null, 0);
+        }
+        // El nodo origen tiene un costo inicial de 0 hacia sí mismo
+        distances[startIndex] = 0;
+
+        // Inicialización de la Cola de Prioridad Mínima propia para procesar siempre el camino más económico primero
+        MyPriorityQueue<String> pq = new MyPriorityQueue<>(maxV * maxV);
+        pq.insert(startId, 0);
+
+        // Ciclo de Exploración y Relajación de Aristas
+        while (!pq.isEmpty()) {
+            // Extrae el nodo con la menor distancia acumulada actual
+            String u = pq.extractMin();
+            int uIndex = indexOf(vertices, maxV, u);
+
+            // Si el nodo ya fue consolidado de forma óptima en iteraciones previas, se ignora
+            if (uIndex == -1 || visited[uIndex]) continue;
+            visited[uIndex] = true;
+
+            // OPTIMIZACIÓN LOGÍSTICA: Si el nodo extraído coincide con nuestra meta,
+            // detenemos el algoritmo prematuramente dado que Dijkstra garantiza optimización total al momento de extracción.
+            if (u.equals(endId)) break;
+
+            // Recorrido de los vecinos potenciales adyacentes al vértice actual
+            for (int vIndex = 0; vIndex < maxV; vIndex++) {
+                if (vertices[vIndex] != null && !visited[vIndex]) {
+                    String v = vertices[vIndex].getId();
+
+                    // Si existe una calle real que conecte de forma directa a 'u' con 'v'
+                    if (graph.hasEdge(u, v)) {
+                        int weight = graph.getWeight(u, v);
+                        int alternativeDist = distances[uIndex] + weight;
+
+                        // EVALUACIÓN DE RELAJACIÓN: ¿Es este camino alternativo más corto que el previamente guardado?
+                        if (alternativeDist < distances[vIndex]) {
+                            distances[vIndex] = alternativeDist;  // Actualiza con la nueva distancia mínima
+                            predecessors[vIndex] = u;             // Registra de dónde veníamos para marcar el camino
+                            pq.insert(v, alternativeDist);        // Inserta o actualiza la prioridad en el Heap
+                        }
+                    }
+                }
+            }
+        }
+
+        //Extracción de Métricas Finales
+        int finalDistance = distances[endIndex];
+
+        // Validación de Conectividad Vial: Si la distancia quedó en infinito, el destino es físicamente inaccesible
+        if (finalDistance == Integer.MAX_VALUE) {
+            return new model.ShortestPathResult(startId, endId, Integer.MAX_VALUE, null, 0);
+        }
+
+        // Reconstrucción Inversa del Camino usando Estructura LIFO
+        // Como el camino se recupera rastreando hacia atrás desde el final ("Destino -> Predecesor -> Predecesor..."),
+        // una Pila (MyStack) propia nos permite voltear el orden de los elementos de manera natural gracias a su propiedad LIFO.
+        structures.MyStack<String> tempStack = new structures.MyStack<>();
+        String currentTrack = endId;
+        int currentTrackIndex = endIndex;
+        int vertexCounter = 0;
+
+        // Rastreo en reversa hasta topar con el origen (cuyo predecesor es null)
+        while (currentTrack != null) {
+            tempStack.push(currentTrack); // Apila el nodo actual
+            vertexCounter++;              // Incrementa el tamaño del camino
+            currentTrack = predecessors[currentTrackIndex]; // Salta al predecesor
+            if (currentTrack != null) {
+                currentTrackIndex = indexOf(vertices, maxV, currentTrack);
+            }
+        }
+
+        // Consolidación Final en Lista Enlazada
+        // Al vaciar la pila mediante operaciones pop(), los nodos se insertan en nuestra lista
+        // recuperando su orden secuencial correcto y natural: "Origen -> ... -> Destino"
+        MyLinkedList<String> finalPath = new MyLinkedList<>();
+        while (!tempStack.isEmpty()) {
+            finalPath.add(tempStack.pop());
+        }
+        // Retorna el paquete de datos unificado y listo para ser reportado
+        return new model.ShortestPathResult(startId, endId, finalDistance, finalPath, vertexCounter);
+    }
 
     /**
-     * // Agregado por integrante 3
      * Calcula y retorna la matriz de distancias mínimas usando Floyd-Warshall.
      *
      * Este método es parecido a floydWarshall(Graph graph), pero en lugar de

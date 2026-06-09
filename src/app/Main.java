@@ -34,8 +34,9 @@ public class Main {
             ReportGenerator.generateFullReport(data);
 
             /*
-             * Abrimos la ventana gráfica.
+             * Ejecutamos la consulta directa de Dijkstra origen-destino para el reporte.
              */
+            ReportGenerator.mostrarConsultaDijkstra(data.getGraph(), "V01", "V24");
             MainWindow.launchWindow(data);
 
         } catch (Exception exception) {

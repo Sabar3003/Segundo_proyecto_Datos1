@@ -1,170 +1,54 @@
 package model;
 
+import structures.MyLinkedList;
+
 /**
- * Clase ShortestPathResult.
- *
- * Esta clase guarda el resultado de una consulta de camino mínimo.
- *
- * Guarda:
- * - El vértice origen.
- * - El vértice destino.
- * - El camino en orden.
- * - La cantidad real de vértices del camino.
- * - La distancia total.
- * - Si el destino es alcanzable o no.
+ * Clase de transferencia de datos para encapsular el resultado de una consulta específica del algoritmo de Dijkstra
+ * entre un origen y destino determinados.
  */
 public class ShortestPathResult {
-
-    // Id del vértice origen.
-    private String originId;
-
-    // Id del vértice destino.
-    private String destinationId;
-
-    // Arreglo con los vértices del camino en orden.
-    private String[] path;
-
-    // Cantidad real de vértices dentro del camino.
-    private int pathCount;
-
-    // Distancia total del camino mínimo.
-    private int totalDistance;
-
-    // Indica si el destino se pudo alcanzar desde el origen.
-    private boolean reachable;
+    private String origin;               // ID del nodo inicial de la consulta
+    private String destination;          // ID del nodo final/meta de la consulta
+    private int totalDistance;           // Distancia mínima acumulada en metros (o Integer.MAX_VALUE si es inalcanzable)
+    private MyLinkedList<String> path;   // Estructura lineal propia que almacena la secuencia ordenada del camino
+    private int vertexCount;             // Contador total de paradas o vértices involucrados en la ruta
 
     /**
-     * Constructor de ShortestPathResult.
-     *
-     * @param originId id del origen.
-     * @param destinationId id del destino.
-     * @param maxPathSize cantidad máxima posible de vértices en el camino.
+     * Constructor completo para inicializar todos los atributos del resultado.
      */
-    public ShortestPathResult(String originId, String destinationId, int maxPathSize) {
-        this.originId = originId;
-        this.destinationId = destinationId;
-        this.path = new String[maxPathSize];
-        this.pathCount = 0;
-        this.totalDistance = Integer.MAX_VALUE;
-        this.reachable = false;
-    }
-
-    /**
-     * Agrega un vértice al camino.
-     *
-     * @param vertexId id del vértice que se desea agregar.
-     * @return true si se agregó correctamente.
-     */
-    public boolean addPathVertex(String vertexId) {
-        if (pathCount >= path.length) {
-            return false;
-        }
-
-        path[pathCount] = vertexId;
-        pathCount++;
-
-        return true;
-    }
-
-    /**
-     * Retorna el origen del camino.
-     *
-     * @return id del origen.
-     */
-    public String getOriginId() {
-        return originId;
-    }
-
-    /**
-     * Retorna el destino del camino.
-     *
-     * @return id del destino.
-     */
-    public String getDestinationId() {
-        return destinationId;
-    }
-
-    /**
-     * Retorna el arreglo del camino.
-     *
-     * Importante:
-     * El arreglo puede tener posiciones null al final.
-     * Para recorrerlo correctamente se debe usar pathCount.
-     *
-     * @return arreglo del camino.
-     */
-    public String[] getPath() {
-        return path;
-    }
-
-    /**
-     * Retorna cuántos vértices reales tiene el camino.
-     *
-     * @return cantidad de vértices en el camino.
-     */
-    public int getPathCount() {
-        return pathCount;
-    }
-
-    /**
-     * Retorna la distancia total.
-     *
-     * @return distancia total en metros.
-     */
-    public int getTotalDistance() {
-        return totalDistance;
-    }
-
-    /**
-     * Cambia la distancia total.
-     *
-     * @param totalDistance distancia calculada por Dijkstra.
-     */
-    public void setTotalDistance(int totalDistance) {
+    public ShortestPathResult(String origin, String destination, int totalDistance, MyLinkedList<String> path, int vertexCount) {
+        this.origin = origin;
+        this.destination = destination;
         this.totalDistance = totalDistance;
+        this.path = path;
+        this.vertexCount = vertexCount;
     }
 
     /**
-     * Indica si el destino es alcanzable desde el origen.
-     *
-     * @return true si hay camino.
+     * Procesa la lista enlazada del camino y la transforma en un formato legible para el usuario (ej: "V01 -> V07 -> V24").
+     **@return String formateado con la ruta o "Inalcanzable" si no existe conexión.
      */
-    public boolean isReachable() {
-        return reachable;
-    }
+    public String getFormattedPath() {
+        // Validación de seguridad si el camino no se pudo construir (grafo desconectado)
+        if (path == null || path.isEmpty()) return "Inalcanzable";
+        StringBuilder sb = new StringBuilder();
+        structures.Node<String> current = path.getHead();
 
-    /**
-     * Cambia el estado de alcanzabilidad.
-     *
-     * @param reachable true si el camino existe.
-     */
-    public void setReachable(boolean reachable) {
-        this.reachable = reachable;
-    }
-
-    /**
-     * Convierte el camino a texto.
-     *
-     * Ejemplo:
-     * V01 -> V07 -> V13 -> V24
-     *
-     * @return camino en formato texto.
-     */
-    public String getPathAsText() {
-        if (!reachable || pathCount == 0) {
-            return "No existe camino.";
-        }
-
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < pathCount; i++) {
-            builder.append(path[i]);
-
-            if (i < pathCount - 1) {
-                builder.append(" -> ");
+        // Recorrido secuencial O(n) sobre la lista propia para concatenar las paradas
+        while (current != null) {
+            sb.append(current.getData());
+            if (current.getNext() != null) {
+                sb.append(" -> "); // Añade el separador visual si no es el último nodo
             }
+            current = current.getNext();
         }
-
-        return builder.toString();
+        return sb.toString();
     }
+
+    // Getters estándar para la extracción de datos en la interfaz o reportes
+    public String getOrigin() { return origin; }
+    public String getDestination() { return destination; }
+    public int getTotalDistance() { return totalDistance; }
+    public MyLinkedList<String> getPath() { return path; }
+    public int getVertexCount() { return vertexCount; }
 }
