@@ -29,3 +29,17 @@ Thumbs.db
 # Crash logs de Java
 hs_err_pid*
 replay_pid*
+
+# Archivos de VS Code
+.vscode/
+.history/
+
+# Librerías locales para VS Code
+lib-vscode/
+
+# Librerías externas
+/lib/
+*.jar
+*.war
+*.ear
+*.dll
