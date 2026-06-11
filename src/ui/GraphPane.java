@@ -148,7 +148,6 @@ public class GraphPane extends Canvas {
         drawRoutes(gc);
         drawShortestPath(gc);
         drawVertices(gc);
-        drawLegend(gc);
     }
 
     /**
@@ -360,7 +359,7 @@ public class GraphPane extends Canvas {
                 drawIntersection(gc, vertex);
             }
 
-            drawPendingMarkerIfNeeded(gc, vertex);
+            drawUnassignedMarkerIfNeeded(gc, vertex);
             drawVertexLabel(gc, vertex);
         }
     }
@@ -432,17 +431,17 @@ public class GraphPane extends Canvas {
     }
 
     /**
-     * Dibuja un marcador si el vértice tiene paquetes pendientes.
+     * Dibuja un marcador si el vértice tiene paquetes no asignados.
      *
-     * Un paquete se considera pendiente si no aparece en ningún camión.
+     * Un paquete se considera no asignado si no aparece dentro de ningún camión.
      *
      * @param gc contexto gráfico.
      * @param vertex vértice revisado.
      */
-    private void drawPendingMarkerIfNeeded(GraphicsContext gc, Vertex vertex) {
-        int pendingCount = countPendingPackagesForVertex(vertex.getId());
+    private void drawUnassignedMarkerIfNeeded(GraphicsContext gc, Vertex vertex) {
+        int unassignedCount = countUnassignedPackagesForVertex(vertex.getId());
 
-        if (pendingCount == 0) {
+        if (unassignedCount == 0) {
             return;
         }
 
@@ -450,7 +449,7 @@ public class GraphPane extends Canvas {
         gc.fillOval(vertex.getX() + 10, vertex.getY() - 25, 20, 20);
 
         gc.setFill(Color.BLACK);
-        gc.fillText(String.valueOf(pendingCount), vertex.getX() + 16, vertex.getY() - 10);
+        gc.fillText(String.valueOf(unassignedCount), vertex.getX() + 16, vertex.getY() - 10);
     }
 
     /**
@@ -465,12 +464,12 @@ public class GraphPane extends Canvas {
     }
 
     /**
-     * Cuenta cuántos paquetes pendientes tiene un vértice.
+     * Cuenta cuántos paquetes no asignados tiene un vértice.
      *
      * @param vertexId id del vértice.
-     * @return cantidad de paquetes pendientes.
+     * @return cantidad de paquetes no asignados.
      */
-    private int countPendingPackagesForVertex(String vertexId) {
+    private int countUnassignedPackagesForVertex(String vertexId) {
         int count = 0;
 
         for (int i = 0; i < packages.length; i++) {
@@ -585,7 +584,7 @@ public class GraphPane extends Canvas {
         gc.setFill(Color.GOLD);
         gc.fillOval(x + 15, y + 142, 18, 18);
         gc.setFill(Color.BLACK);
-        gc.fillText("Paquete pendiente", x + 45, y + 156);
+        gc.fillText("No asignado", x + 45, y + 156);
 
         /*
          * Subtítulo para las rutas.
