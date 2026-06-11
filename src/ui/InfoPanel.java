@@ -13,6 +13,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import model.RouteComparisonResult;
 
 /**
  * Clase InfoPanel.
@@ -40,7 +41,8 @@ public class InfoPanel extends ScrollPane {
             LogisticsData data,
             RouteResult[] routes,
             MSTResult mstResult,
-            GraphPane graphPane
+            GraphPane graphPane,
+            RouteComparisonResult[] routeComparisons
     ) {
 
         /*
@@ -54,29 +56,33 @@ public class InfoPanel extends ScrollPane {
          * Se usa un fondo claro para que se vea más limpio.
          */
         content.setStyle(
-                "-fx-padding: 20;" +
+                "-fx-padding: 20 20 90 20;" +
                         "-fx-background-color: #ECEFF1;"
         );
 
         addHeader(content);
+        addLegend(content);
         addGeneralSummary(content, data);
         addShortestPathQuery(content, data, graphPane);
         addMSTSummary(content, mstResult);
         addTrucks(content, data.getTrucks());
-        addRoutes(content, routes);
-        addPendingPackages(content, data.getPackages(), data.getTrucks());
+        addRouteComparisons(content, routeComparisons);
+        addUnassignedPackages(content, data);
 
         /*
          * Configuración del ScrollPane.
-         * Esto permite bajar cuando hay mucha información.
+         * Esto permite bajar correctamente hasta el final del panel.
          */
         setContent(content);
         setFitToWidth(true);
-        setPrefWidth(400);
+        setPrefWidth(460);
+        setMinWidth(460);
+        setMaxWidth(460);
 
-        /*
-         * Quitamos bordes innecesarios y mantenemos el fondo del mismo color.
-         */
+        setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        setPannable(true);
+
         setStyle(
                 "-fx-background: #ECEFF1;" +
                         "-fx-background-color: #ECEFF1;" +
@@ -216,6 +222,32 @@ public class InfoPanel extends ScrollPane {
     }
 
     /**
+     * Agrega la leyenda visual al panel derecho.
+     *
+     * Antes esta información se dibujaba encima del grafo.
+     * Ahora se coloca en el panel de control para evitar que tape nodos,
+     * rutas o aristas en los distintos casos de prueba.
+     *
+     * @param content contenedor principal.
+     */
+    private void addLegend(VBox content) {
+        VBox card = createCard();
+
+        card.getChildren().add(createSectionTitle("Información relevante"));
+
+        card.getChildren().add(createLegendText("■ Depósito", "#B71C1C"));
+        card.getChildren().add(createLegendText("■ Casa / entrega", "#2E7D32"));
+        card.getChildren().add(createLegendText("● Intersección", "#264653"));
+        card.getChildren().add(createLegendText("━ MST", "#7B1FA2"));
+        card.getChildren().add(createLegendText("● Paquete no asignado", "#FBC02D"));
+        card.getChildren().add(createLegendText("━ Ruta C01", "#FF0000"));
+        card.getChildren().add(createLegendText("━ Ruta C02", "#0000FF"));
+        card.getChildren().add(createLegendText("━ Ruta C03", "#008000"));
+
+        content.getChildren().add(card);
+    }
+
+    /**
      * Agrega el resumen general del caso.
      *
      * @param content contenedor principal.
@@ -289,49 +321,72 @@ public class InfoPanel extends ScrollPane {
     }
 
     /**
-     * Agrega las rutas recomendadas.
+     * Agrega la comparación de rutas por camión.
+     *
+     * Para cada camión se muestra:
+     * - Distancia con Nearest Neighbor.
+     * - Distancia con MST-Based.
+     * - Heurística seleccionada.
+     * - Ahorro porcentual de MST-Based respecto a Nearest Neighbor.
      *
      * @param content contenedor principal.
-     * @param routes rutas calculadas.
+     * @param routeComparisons comparaciones calculadas.
      */
-    private void addRoutes(VBox content, RouteResult[] routes) {
+    private void addRouteComparisons(
+            VBox content,
+            RouteComparisonResult[] routeComparisons
+    ) {
         VBox card = createCard();
 
-        card.getChildren().add(createSectionTitle("Rutas recomendadas"));
+        card.getChildren().add(createSectionTitle("Comparación de heurísticas"));
 
-        if (routes == null || routes.length == 0) {
+        if (routeComparisons == null || routeComparisons.length == 0) {
             card.getChildren().add(createText("No hay rutas calculadas."));
             content.getChildren().add(card);
             return;
         }
 
-        for (int i = 0; i < routes.length; i++) {
-            RouteResult route = routes[i];
+        for (int i = 0; i < routeComparisons.length; i++) {
+            RouteComparisonResult comparison = routeComparisons[i];
 
-            if (route == null) {
+            if (comparison == null) {
                 continue;
             }
+
+            RouteResult nearestRoute = comparison.getNearestNeighborRoute();
+            RouteResult mstRoute = comparison.getMstBasedRoute();
+            RouteResult selectedRoute = comparison.getSelectedRoute();
 
             StringBuilder builder = new StringBuilder();
 
             builder.append("Camión ")
-                    .append(route.getTruckId())
-                    .append("\nHeurística: ")
-                    .append(route.getHeuristicName())
-                    .append("\nDistancia: ")
-                    .append(route.getTotalDistance())
-                    .append(" m");
+                    .append(selectedRoute.getTruckId())
+                    .append("\nNearest Neighbor: ")
+                    .append(nearestRoute.getTotalDistance())
+                    .append(" m | ")
+                    .append(getTravelTimeText(nearestRoute.getTotalDistance()))
+                    .append("\nMST-Based: ")
+                    .append(mstRoute.getTotalDistance())
+                    .append(" m | ")
+                    .append(getTravelTimeText(mstRoute.getTotalDistance()))
+                    .append("\nSeleccionada: ")
+                    .append(comparison.getSelectedHeuristicName())
+                    .append("\nTiempo estimado seleccionado: ")
+                    .append(getTravelTimeText(selectedRoute.getTotalDistance()))
+                    .append("\nAhorro MST-Based: ")
+                    .append(String.format("%.2f", comparison.getMstSavingPercentage()))
+                    .append("%");
 
-            builder.append("\nOrden: ");
-            builder.append(route.getDepotId());
+            builder.append("\nRuta seleccionada: ");
+            builder.append(selectedRoute.getDepotId());
 
-            String[] stops = route.getOrderedStops();
+            String[] stops = selectedRoute.getOrderedStops();
 
-            for (int j = 0; j < route.getStopCount(); j++) {
+            for (int j = 0; j < selectedRoute.getStopCount(); j++) {
                 builder.append(" -> ").append(stops[j]);
             }
 
-            builder.append(" -> ").append(route.getDepotId());
+            builder.append(" -> ").append(selectedRoute.getDepotId());
 
             card.getChildren().add(createRouteText(builder.toString()));
         }
@@ -340,35 +395,96 @@ public class InfoPanel extends ScrollPane {
     }
 
     /**
-     * Agrega la lista de paquetes pendientes.
+     * Agrega la lista de paquetes no asignados.
      *
-     * Un paquete pendiente es aquel que no fue asignado a ningún camión.
+     * Un paquete puede quedar no asignado por dos razones principales:
      *
-     * @param content contenedor principal.
-     * @param packages paquetes cargados.
-     * @param trucks camiones con paquetes asignados.
+     * 1. Destino inalcanzable:
+     *    Warshall indica que no existe camino desde el depósito hasta el destino.
+     *
+     * 2. Capacidad insuficiente:
+     *    El destino sí es alcanzable, pero ningún camión pudo cargar el paquete.
+     *
+     * Esta sección ayuda a defender mejor el requisito de validación de destinos
+     * y asignación de paquetes.
+     *
+     * @param content contenedor principal del panel.
+     * @param data datos cargados del proyecto.
      */
-    private void addPendingPackages(VBox content, Package[] packages, Truck[] trucks) {
+    private void addUnassignedPackages(VBox content, LogisticsData data) {
         VBox card = createCard();
 
-        card.getChildren().add(createSectionTitle("Paquetes pendientes"));
+        card.getChildren().add(createSectionTitle("Paquetes no asignados"));
 
-        int pendingCount = 0;
+        Graph graph = data.getGraph();
+        Package[] packages = data.getPackages();
+        Truck[] trucks = data.getTrucks();
+        String depotId = data.getDepotId();
+
+        /*
+         * Se calcula la matriz de alcanzabilidad con Warshall.
+         * Esta matriz permite saber si un destino se puede alcanzar desde el depósito.
+         */
+        boolean[][] reachabilityMatrix = GraphAlgorithms.warshall(graph, depotId);
+
+        int unassignedCount = 0;
 
         for (int i = 0; i < packages.length; i++) {
             Package currentPackage = packages[i];
 
             if (!isPackageAssigned(currentPackage, trucks)) {
-                card.getChildren().add(createText(currentPackage.toString()));
-                pendingCount++;
+                String reason = getUnassignedReason(
+                        graph,
+                        currentPackage,
+                        depotId,
+                        reachabilityMatrix
+                );
+
+                String text =
+                        currentPackage.getId()
+                                + " | Destino: " + currentPackage.getDestinationVertexId()
+                                + " | Peso: " + currentPackage.getWeight() + " kg"
+                                + " | Prioridad: " + currentPackage.getPriority()
+                                + "\nMotivo: " + reason;
+
+                card.getChildren().add(createWarningText(text));
+                unassignedCount++;
             }
         }
 
-        if (pendingCount == 0) {
-            card.getChildren().add(createText("No hay paquetes pendientes."));
+        if (unassignedCount == 0) {
+            card.getChildren().add(createText("No hay paquetes no asignados."));
         }
 
         content.getChildren().add(card);
+    }
+    /**
+     * Determina por qué un paquete no fue asignado.
+     *
+     * @param graph grafo de la ciudad.
+     * @param packageToCheck paquete no asignado.
+     * @param depotId id del depósito.
+     * @param reachabilityMatrix matriz de Warshall.
+     * @return motivo textual de no asignación.
+     */
+    private String getUnassignedReason(
+            Graph graph,
+            Package packageToCheck,
+            String depotId,
+            boolean[][] reachabilityMatrix
+    ) {
+        int depotIndex = graph.getVertexIndex(depotId);
+        int destinationIndex = graph.getVertexIndex(packageToCheck.getDestinationVertexId());
+
+        if (depotIndex == -1 || destinationIndex == -1) {
+            return "Destino inexistente en el grafo.";
+        }
+
+        if (!reachabilityMatrix[depotIndex][destinationIndex]) {
+            return "Destino inalcanzable desde el depósito.";
+        }
+
+        return "Capacidad insuficiente en la flota.";
     }
 
     /**
@@ -432,6 +548,28 @@ public class InfoPanel extends ScrollPane {
     }
 
     /**
+     * Crea una etiqueta para la leyenda con color personalizado.
+     *
+     * @param text texto de la leyenda.
+     * @param color color en formato hexadecimal.
+     * @return label configurado.
+     */
+    private Label createLegendText(String text, String color) {
+        Label label = new Label(text);
+
+        label.setWrapText(true);
+
+        label.setStyle(
+                "-fx-font-size: 12px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: " + color + ";" +
+                        "-fx-padding: 3;"
+        );
+
+        return label;
+    }
+
+    /**
      * Crea una etiqueta de texto normal.
      *
      * @param text contenido.
@@ -471,6 +609,60 @@ public class InfoPanel extends ScrollPane {
                         "-fx-background-color: #E3F2FD;" +
                         "-fx-background-radius: 8;" +
                         "-fx-border-color: #BBDEFB;" +
+                        "-fx-border-radius: 8;"
+        );
+
+        return label;
+    }
+
+    /**
+     * Calcula el tiempo estimado de viaje en minutos.
+     *
+     * Para este proyecto se asume una velocidad promedio de 40 km/h.
+     *
+     * Conversión:
+     * 40 km/h = 40000 metros / 60 minutos
+     * 40 km/h = 666.67 metros por minuto aproximadamente.
+     *
+     * @param distanceMeters distancia total de la ruta en metros.
+     * @return tiempo estimado en minutos.
+     */
+    private double calculateTravelTimeMinutes(int distanceMeters) {
+        double metersPerMinute = 40000.0 / 60.0;
+
+        return distanceMeters / metersPerMinute;
+    }
+
+    /**
+     * Retorna el texto del tiempo estimado de viaje.
+     *
+     * @param distanceMeters distancia total en metros.
+     * @return texto con el tiempo en minutos.
+     */
+    private String getTravelTimeText(int distanceMeters) {
+        double minutes = calculateTravelTimeMinutes(distanceMeters);
+
+        return String.format("%.2f min", minutes);
+    }
+
+    /**
+     * Crea una etiqueta especial para advertencias o paquetes no asignados.
+     *
+     * @param text texto que se desea mostrar.
+     * @return label configurado.
+     */
+    private Label createWarningText(String text) {
+        Label label = new Label(text);
+
+        label.setWrapText(true);
+
+        label.setStyle(
+                "-fx-font-size: 12px;" +
+                        "-fx-text-fill: #4E342E;" +
+                        "-fx-padding: 8;" +
+                        "-fx-background-color: #FFF3E0;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-border-color: #FFCC80;" +
                         "-fx-border-radius: 8;"
         );
 

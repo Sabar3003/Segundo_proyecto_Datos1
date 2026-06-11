@@ -1,0 +1,50 @@
+{
+  "ciudad": {
+    "vertices": [
+      { "id": "V01", "tipo": "DEPOT", "x": 80, "y": 80 },
+      { "id": "V02", "tipo": "INTERSECCION", "x": 220, "y": 80 },
+      { "id": "V03", "tipo": "ENTREGA", "x": 360, "y": 80 },
+      { "id": "V04", "tipo": "INTERSECCION", "x": 500, "y": 80 },
+
+      { "id": "V05", "tipo": "ENTREGA", "x": 80, "y": 230 },
+      { "id": "V06", "tipo": "INTERSECCION", "x": 220, "y": 230 },
+      { "id": "V07", "tipo": "ENTREGA", "x": 360, "y": 230 },
+      { "id": "V08", "tipo": "INTERSECCION", "x": 500, "y": 230 },
+
+      { "id": "V09", "tipo": "ENTREGA", "x": 660, "y": 370 },
+      { "id": "V10", "tipo": "ENTREGA", "x": 760, "y": 370 }
+    ],
+    "aristas": [
+      { "u": "V01", "v": "V02", "distancia": 100 },
+      { "u": "V02", "v": "V03", "distancia": 120 },
+      { "u": "V03", "v": "V04", "distancia": 110 },
+
+      { "u": "V01", "v": "V05", "distancia": 130 },
+      { "u": "V02", "v": "V06", "distancia": 115 },
+      { "u": "V03", "v": "V07", "distancia": 125 },
+      { "u": "V04", "v": "V08", "distancia": 140 },
+
+      { "u": "V05", "v": "V06", "distancia": 90 },
+      { "u": "V06", "v": "V07", "distancia": 95 },
+      { "u": "V07", "v": "V08", "distancia": 100 },
+
+      { "u": "V02", "v": "V07", "distancia": 160 },
+      { "u": "V05", "v": "V07", "distancia": 170 },
+
+      { "u": "V09", "v": "V10", "distancia": 80 }
+    ]
+  },
+  "paquetes": [
+    { "id": "P01", "destino": "V03", "peso": 8, "prioridad": 1 },
+    { "id": "P02", "destino": "V05", "peso": 10, "prioridad": 2 },
+    { "id": "P03", "destino": "V07", "peso": 12, "prioridad": 1 },
+    { "id": "P04", "destino": "V08", "peso": 9, "prioridad": 3 },
+
+    { "id": "P05", "destino": "V09", "peso": 6, "prioridad": 1 },
+    { "id": "P06", "destino": "V10", "peso": 7, "prioridad": 2 }
+  ],
+  "camiones": [
+    { "id": "C01", "capacidad": 25 },
+    { "id": "C02", "capacidad": 20 }
+  ]
+}
