@@ -37,17 +37,34 @@ public class MSTResult {
     // Cantidad real de aristas que se han agregado al MST.
     private int edgeCount;
 
-    // Suma total de los pesos de todas las aristas del MST.
+    // Suma total de los pesos de todas las aristas seleccionadas.
+    // Si el grafo es conexo, corresponde al costo del MST.
+    // Si no es conexo, corresponde al costo del bosque de expansión mínima.
     private int totalCost;
 
     // Tiempo que tardó el algoritmo en ejecutarse, medido en nanosegundos.
     private long executionTime;
 
+    // Cantidad de componentes conexas detectadas en el grafo.
+    // Si vale 1, el grafo es conexo y sí existe un MST completo.
+    // Si vale más de 1, no existe un MST completo.
+    // En ese caso, las aristas guardadas forman un bosque de expansión mínima.
+    private int componentCount;
+
+    // Indica si el resultado corresponde a un MST completo.
+    // true  -> el grafo era conexo.
+    // false -> el grafo no era conexo y se generó un bosque.
+    private boolean completeMST;
+
     /**
-     * Constructor de MSTResult.
+     * Constructor simple de MSTResult.
+     *
+     * Se usa cuando todavía no se conoce si el grafo es conexo o no.
+     * Más adelante Prim o Kruskal pueden actualizar componentCount
+     * y completeMST cuando terminen de ejecutarse.
      *
      * @param algorithmName nombre del algoritmo que genera el resultado.
-     * @param maxEdges cantidad máxima de aristas que podría tener el MST.
+     * @param maxEdges cantidad máxima de aristas que puede guardar el resultado.
      */
     public MSTResult(String algorithmName, int maxEdges) {
         this.algorithmName = algorithmName;
@@ -55,6 +72,11 @@ public class MSTResult {
         this.edgeCount = 0;
         this.totalCost = 0;
         this.executionTime = 0;
+
+        // Valor inicial temporal.
+        // Luego Prim o Kruskal lo actualizan al terminar.
+        this.componentCount = 0;
+        this.completeMST = false;
     }
 
     /**
@@ -149,18 +171,50 @@ public class MSTResult {
     }
 
     /**
-     * Verifica si el MST está completo.
+     * Guarda la información de conectividad del resultado.
      *
-     * En un grafo conexo con V vértices, un MST válido debe tener V - 1 aristas.
+     * Este método se llama al final de Prim o Kruskal,
+     * cuando ya se sabe cuántas componentes tiene el grafo.
      *
-     * @param vertexCount cantidad de vértices del grafo original.
-     * @return true si tiene exactamente vertexCount - 1 aristas.
+     * @param componentCount cantidad de componentes conexas detectadas.
      */
-    public boolean isComplete(int vertexCount) {
-        if (edgeCount == vertexCount - 1) {
-            return true;
-        }
-        return false;
+    public void setConnectivityInfo(int componentCount) {
+        this.componentCount = componentCount;
+        this.completeMST = componentCount == 1;
+    }
+
+    /**
+     * Retorna la cantidad de componentes conexas detectadas.
+     *
+     * Si retorna 1, el grafo era conexo.
+     * Si retorna más de 1, el grafo no era conexo.
+     *
+     * @return cantidad de componentes conexas.
+     */
+    public int getComponentCount() {
+        return componentCount;
+    }
+
+    /**
+     * Retorna true si el resultado corresponde a un MST completo.
+     *
+     * Un MST completo solo existe cuando el grafo es conexo.
+     *
+     * @return true si es MST completo, false si es bosque.
+     */
+    public boolean isCompleteMST() {
+        return completeMST;
+    }
+
+    /**
+     * Retorna true si el resultado corresponde a un bosque de expansión mínima.
+     *
+     * Esto ocurre cuando el grafo no es conexo.
+     *
+     * @return true si es bosque, false si es MST completo.
+     */
+    public boolean isForest() {
+        return !completeMST;
     }
 
     /**PRUEBAS
@@ -180,5 +234,14 @@ public class MSTResult {
 
         System.out.println("Costo total: " + totalCost + "m");
         System.out.println("Tiempo de ejecución: " + executionTime + " ns");
+
+        // Mostramos si el resultado fue un MST completo o un bosque.
+        if (completeMST) {
+            System.out.println("Tipo de resultado: MST completo");
+        } else {
+            System.out.println("Tipo de resultado: Bosque de expansión mínima");
+        }
+
+        System.out.println("Componentes conexas detectadas: " + componentCount);
     }
 }

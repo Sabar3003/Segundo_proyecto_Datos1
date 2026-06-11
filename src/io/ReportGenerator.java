@@ -149,6 +149,8 @@ public class ReportGenerator {
     /**
      * Imprime una comparación resumida entre Prim y Kruskal.
      *
+     * Si el grafo es conexo, compara los costos del MST completo.
+     * Si el grafo no es conexo, compara los costos del bosque de expansión mínima.
      * @param primResult resultado generado por Prim.
      * @param kruskalResult resultado generado por Kruskal.
      */
@@ -167,10 +169,43 @@ public class ReportGenerator {
         System.out.println("Costo Prim: " + primResult.getTotalCost() + "m");
         System.out.println("Costo Kruskal: " + kruskalResult.getTotalCost() + "m");
 
-        if (primResult.getTotalCost() == kruskalResult.getTotalCost()) {
-            System.out.println("Resultado: ambos algoritmos obtuvieron el mismo costo total.");
+        // Mostramos cuántas componentes conexas detectó cada algoritmo.
+        // Si ambos algoritmos están correctos, deberían detectar la misma cantidad.
+        System.out.println("Componentes Prim: " + primResult.getComponentCount());
+        System.out.println("Componentes Kruskal: " + kruskalResult.getComponentCount());
+
+        // Si detectan distinta cantidad de componentes, hay una inconsistencia.
+        if (primResult.getComponentCount() != kruskalResult.getComponentCount()) {
+            System.out.println("Advertencia: Prim y Kruskal detectaron distinta cantidad de componentes.");
+        }
+
+        /*
+        * Si ambos resultados son MST completos, el grafo era conexo.
+        * En ese caso, Prim y Kruskal deben coincidir en el costo del MST.
+        *
+        * Si alguno de los dos no es MST completo, el grafo no es conexo.
+        * En ese caso no existe un MST completo, sino un bosque de expansión mínima.
+        */
+        if (primResult.isCompleteMST() && kruskalResult.isCompleteMST()) {
+
+            System.out.println("Tipo de resultado: MST completo.");
+
+            if (primResult.getTotalCost() == kruskalResult.getTotalCost()) {
+                System.out.println("Resultado: Prim y Kruskal obtuvieron el mismo costo de MST.");
+            } else {
+                System.out.println("Resultado: los costos del MST son diferentes. Se recomienda revisar la implementación.");
+            }
+
         } else {
-            System.out.println("Resultado: los costos son diferentes. Se recomienda revisar el MST.");
+
+            System.out.println("Tipo de resultado: bosque de expansion minima.");
+            System.out.println("Aviso: el grafo no es conexo, por lo tanto no existe un MST completo.");
+
+            if (primResult.getTotalCost() == kruskalResult.getTotalCost()) {
+                System.out.println("Resultado: Prim y Kruskal obtuvieron el mismo costo de bosque minimo.");
+            } else {
+                System.out.println("Resultado: los costos del bosque son diferentes. Se recomienda revisar la implementación.");
+            }
         }
 
         System.out.println();

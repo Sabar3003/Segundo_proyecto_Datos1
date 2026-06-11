@@ -17,12 +17,14 @@ import structures.MyPriorityQueue;
  * - Kruskal
  *
  * En LogísTEC, el MST permite encontrar un conjunto mínimo de calles
- * que mantiene conectados los vértices del grafo, siempre que el grafo sea conexo.
+ * que mantiene conectados los vértices del grafo, siempre que el grafo sea
+ * conexo.
  *
  * Esta clase trabaja con:
  * - Graph: para leer los vértices y vecinos del grafo.
  * - Edge: para representar las aristas seleccionadas.
- * - MyLinkedList y Node: porque los vecinos del grafo están guardados en listas enlazadas.
+ * - MyLinkedList y Node: porque los vecinos del grafo están guardados en listas
+ * enlazadas.
  * - UnionFind: se usa en Kruskal.
  * - MyPriorityQueue: se usa en Prim.
  */
@@ -55,7 +57,8 @@ public class MSTAlgorithms {
     private static Edge[] getAllEdges(Graph graph) {
 
         // Primero contamos cuántas aristas únicas hay.
-        // Esto se hace porque estamos usando arreglos normales, entonces necesitamos saber 
+        // Esto se hace porque estamos usando arreglos normales, entonces necesitamos
+        // saber
         // el tamaño antes de crear el arreglo.
         int totalEdges = countUndirectedEdges(graph);
 
@@ -127,7 +130,8 @@ public class MSTAlgorithms {
      * Cuenta cuántas aristas únicas tiene el grafo.
      *
      * Como el grafo es no dirigido, cada arista aparece dos veces en la lista
-     * de adyacencia. Por eso se usa la misma regla: índice del origen < índice del destino
+     * de adyacencia. Por eso se usa la misma regla: índice del origen < índice del
+     * destino
      *
      * @param graph grafo de la ciudad.
      * @return cantidad de aristas únicas.
@@ -158,7 +162,7 @@ public class MSTAlgorithms {
             if (neighbors == null) {
                 continue;
             }
-            
+
             // Recorremos la lista enlazada de vecinos.
             Node<AdjacencyNode> currentNode = neighbors.getHead();
 
@@ -171,7 +175,8 @@ public class MSTAlgorithms {
                 int toIndex = graph.getVertexIndex(neighbor.getDestination());
 
                 // Contamos solo una dirección de la arista.
-                // Usamos la regla: índice del origen < índice del destino para evitar duplicados.
+                // Usamos la regla: índice del origen < índice del destino para evitar
+                // duplicados.
                 if (i < toIndex) {
                     count++;
                 }
@@ -190,7 +195,7 @@ public class MSTAlgorithms {
      * las aristas más baratas del grafo.
      *
      * Se implementa con bubble sort para mantenerlo simple y fácil
-     * de entender. No es el más eficiente, pero sirve 
+     * de entender. No es el más eficiente, pero sirve
      *
      * @param edges arreglo de aristas que se desea ordenar.
      */
@@ -242,8 +247,10 @@ public class MSTAlgorithms {
         // Obtenemos la cantidad real de vértices del grafo.
         int vertexCount = graph.getVertexCount();
 
-        // Un MST completo debe tener V - 1 aristas.
-        MSTResult result = new MSTResult("Kruskal", vertexCount - 1); // Creamos el resultado con el nombre del algoritmo y la cantidad máxima de aristas.
+        // En un grafo conexo el MST tiene V - 1 aristas.
+        // En un grafo no conexo, el bosque tendrá menos aristas.
+        // Usamos vertexCount - 1 como capacidad máxima posible.
+        MSTResult result = new MSTResult("Kruskal", vertexCount - 1);
 
         // Obtenemos todas las aristas únicas del grafo.
         Edge[] edges = getAllEdges(graph);
@@ -272,23 +279,48 @@ public class MSTAlgorithms {
             }
 
             /*
-            * union(fromIndex, toIndex) intenta unir los conjuntos.
-            *
-            * Si retorna true:
-            * Significa que estaban en conjuntos diferentes, entonces agregar
-            * esta arista NO forma ciclo.
-            *
-            * Si retorna false:
-            * Significa que ya estaban conectados dentro del MST parcial,
-            * entonces agregar esta arista formaría un ciclo.
-            */
+             * union(fromIndex, toIndex) intenta unir los conjuntos.
+             *
+             * Si retorna true:
+             * Significa que estaban en conjuntos diferentes, entonces agregar
+             * esta arista NO forma ciclo.
+             *
+             * Si retorna false:
+             * Significa que ya estaban conectados dentro del MST parcial,
+             * entonces agregar esta arista formaría un ciclo.
+             */
             if (unionFind.union(fromIndex, toIndex)) {
                 result.addEdge(currentEdge);
             }
 
-            // Si ya tenemos V - 1 aristas, el MST está completo.
-            if (result.isComplete(vertexCount)) {
+            // Si ya tenemos V - 1 aristas, no se pueden agregar más aristas
+            // sin formar ciclos. En ese caso, el árbol de expansión ya está completo.
+            // No usamos isComplete(), porque ahora la conectividad se guarda
+            // con setConnectivityInfo().
+            if (result.getEdgeCount() == vertexCount - 1) {
                 break;
+            }
+        }
+
+        // Contamos cuántas componentes conexas quedaron en UnionFind.
+        // Cada representante distinto corresponde a una componente.
+        //
+        // No usamos HashSet porque el proyecto restringe colecciones de java.util
+        // en el núcleo algorítmico.
+        boolean[] seenRepresentatives = new boolean[vertexCount];
+
+        int componentCount = 0;
+
+        for (int i = 0; i < vertexCount; i++) {
+
+            // Buscamos el representante de la componente del vértice i.
+            int root = unionFind.find(i);
+
+            // Si este representante no se había visto antes,
+            // encontramos una nueva componente.
+            if (!seenRepresentatives[root]) {
+                seenRepresentatives[root] = true;
+                componentCount++;
             }
         }
 
@@ -297,6 +329,11 @@ public class MSTAlgorithms {
 
         // La diferencia entre final e inicial es el tiempo total del algoritmo.
         result.setExecutionTime(endTime - startTime);
+
+        // Guardamos si Kruskal produjo un MST completo o un bosque.
+        // Si componentCount == 1, el grafo era conexo.
+        // Si componentCount > 1, el grafo no era conexo.
+        result.setConnectivityInfo(componentCount);
 
         return result;
     }
@@ -310,17 +347,17 @@ public class MSTAlgorithms {
      *
      * Este método se usa en Prim cada vez que se agrega un nuevo vértice al MST.
      *
-     * @param graph grafo de la ciudad.
-     * @param vertexId vértice desde donde se revisan las aristas.
-     * @param visited arreglo que indica cuáles vértices ya están en el MST.
-     * @param priorityQueue cola de prioridad donde se guardan las aristas candidatas.
+     * @param graph         grafo de la ciudad.
+     * @param vertexId      vértice desde donde se revisan las aristas.
+     * @param visited       arreglo que indica cuáles vértices ya están en el MST.
+     * @param priorityQueue cola de prioridad donde se guardan las aristas
+     *                      candidatas.
      */
     private static void addCandidateEdges(
             Graph graph,
             String vertexId,
             boolean[] visited,
-            MyPriorityQueue<Edge> priorityQueue
-    ) {
+            MyPriorityQueue<Edge> priorityQueue) {
 
         // Pedimos al grafo la lista de vecinos del vértice actual.
         MyLinkedList<AdjacencyNode> neighbors = graph.getNeighbors(vertexId);
@@ -376,7 +413,7 @@ public class MSTAlgorithms {
      * Prim usa una cola de prioridad para escoger siempre la arista vecina
      * de menor peso.
      *
-     * @param graph grafo de la ciudad.
+     * @param graph   grafo de la ciudad.
      * @param startId id del vértice desde donde empieza Prim.
      * @return resultado del MST generado por Prim.
      */
@@ -403,66 +440,106 @@ public class MSTAlgorithms {
         // Arreglo para saber cuáles vértices ya fueron agregados al MST.
         boolean[] visited = new boolean[vertexCount];
 
+        // Cuenta cuántas componentes conexas encuentra Prim.
+        // Si al final vale 1, el grafo era conexo.
+        // Si vale más de 1, el grafo no era conexo y se generó un bosque.
+        int componentCount = 0;
+
         // Cola de prioridad para guardar aristas candidatas.
         // La prioridad será el peso de cada arista.
-
         // Usamos vertexCount * vertexCount como capacidad amplia para pruebas,
         // porque en grafos pequeños es suficiente
         MyPriorityQueue<Edge> priorityQueue = new MyPriorityQueue<>(vertexCount * vertexCount);
 
-        // Marcamos el vértice inicial como visitado.
-        visited[startIndex] = true;
+        // Recorremos el grafo por componentes.
+        // Primero se procesa el vértice inicial recibido por parámetro.
+        // Luego se revisan los demás vértices por si el grafo no es conexo.
+        for (int i = -1; i < vertexCount; i++) {
 
-        // Agregamos a la cola todas las aristas que salen del vértice inicial.
-        addCandidateEdges(graph, startId, visited, priorityQueue);
+            int componentStartIndex;
 
-        // Mientras haya aristas candidatas y el MST aún no esté completo.
-        while (!priorityQueue.isEmpty() && !result.isComplete(vertexCount)) {
-            //Los ! hacen que el true sea false
-            
-            // Sacamos la arista con menor peso.
-            Edge currentEdge = priorityQueue.extractMin();
-
-            // Buscamos los índices de los extremos de la arista.
-            int fromIndex = graph.getVertexIndex(currentEdge.getFrom());
-            int toIndex = graph.getVertexIndex(currentEdge.getTo());
-
-            // Si alguno no existe, se ignora por seguridad.
-            if (fromIndex == -1 || toIndex == -1) {
-                continue;
-            }
-
-            /*
-            * Como Prim agrega aristas desde vértices visitados hacia vértices no visitados,
-            * debemos identificar cuál extremo todavía no está dentro del MST.
-            *
-            * Puede pasar que:
-            * - from está visitado y to no.
-            * - to está visitado y from no.
-            * - ambos ya están visitados, entonces esa arista formaría ciclo y se descarta.
-            */
-            String nextVertexId = null;
-            int nextVertexIndex = -1;
-
-            if (visited[fromIndex] && !visited[toIndex]) {
-                nextVertexId = currentEdge.getTo();
-                nextVertexIndex = toIndex;
-            } else if (visited[toIndex] && !visited[fromIndex]) {
-                nextVertexId = currentEdge.getFrom();
-                nextVertexIndex = fromIndex;
+            // En la primera vuelta usamos el vértice inicial original.
+            if (i == -1) {
+                componentStartIndex = startIndex;
             } else {
-                // Si ambos extremos ya están visitados, agregar esta arista formaría un ciclo.
+                componentStartIndex = i;
+            }
+
+            // Si este vértice ya fue visitado, significa que pertenece
+            // a una componente que ya fue procesada.
+            if (visited[componentStartIndex]) {
                 continue;
             }
 
-            // Agregamos la arista seleccionada al resultado del MST.
-            result.addEdge(currentEdge);
+            // Obtenemos el vértice donde empieza esta nueva componente.
+            Vertex componentStartVertex = graph.getVertex(componentStartIndex);
 
-            // Marcamos el nuevo vértice como parte del MST.
-            visited[nextVertexIndex] = true;
+            // Validación por seguridad.
+            if (componentStartVertex == null) {
+                continue;
+            }
 
-            // Agregamos a la cola las aristas que salen del nuevo vértice.
-            addCandidateEdges(graph, nextVertexId, visited, priorityQueue);
+            // Si llegamos aquí, encontramos una nueva componente conexa.
+            componentCount++;
+
+            // Obtenemos el id del vértice inicial de esta componente.
+            String componentStartId = componentStartVertex.getId();
+
+            // Marcamos el primer vértice de esta componente como visitado.
+            visited[componentStartIndex] = true;
+
+            // Agregamos las aristas candidatas que salen de este vértice.
+            addCandidateEdges(graph, componentStartId, visited, priorityQueue);
+
+            // Procesamos todas las aristas candidatas de esta componente.
+            while (!priorityQueue.isEmpty()) {
+                // Los ! hacen que el true sea false
+
+                // Sacamos la arista con menor peso.
+                Edge currentEdge = priorityQueue.extractMin();
+
+                // Buscamos los índices de los extremos de la arista.
+                int fromIndex = graph.getVertexIndex(currentEdge.getFrom());
+                int toIndex = graph.getVertexIndex(currentEdge.getTo());
+
+                // Si alguno no existe, se ignora por seguridad.
+                if (fromIndex == -1 || toIndex == -1) {
+                    continue;
+                }
+
+                /*
+                 * Como Prim agrega aristas desde vértices visitados hacia vértices no
+                 * visitados,
+                 * debemos identificar cuál extremo todavía no está dentro del MST.
+                 *
+                 * Puede pasar que:
+                 * - from está visitado y to no.
+                 * - to está visitado y from no.
+                 * - ambos ya están visitados, entonces esa arista formaría ciclo y se descarta.
+                 */
+                String nextVertexId = null;
+                int nextVertexIndex = -1;
+
+                if (visited[fromIndex] && !visited[toIndex]) {
+                    nextVertexId = currentEdge.getTo();
+                    nextVertexIndex = toIndex;
+                } else if (visited[toIndex] && !visited[fromIndex]) {
+                    nextVertexId = currentEdge.getFrom();
+                    nextVertexIndex = fromIndex;
+                } else {
+                    // Si ambos extremos ya están visitados, agregar esta arista formaría un ciclo.
+                    continue;
+                }
+
+                // Agregamos la arista seleccionada al resultado del MST.
+                result.addEdge(currentEdge);
+
+                // Marcamos el nuevo vértice como parte del MST.
+                visited[nextVertexIndex] = true;
+
+                // Agregamos a la cola las aristas que salen del nuevo vértice.
+                addCandidateEdges(graph, nextVertexId, visited, priorityQueue);
+            }
         }
 
         // Guardamos el tiempo final.
@@ -471,28 +548,36 @@ public class MSTAlgorithms {
         // Calculamos y guardamos el tiempo total de ejecución.
         result.setExecutionTime(endTime - startTime);
 
-        // Si no se logró completar el MST, el grafo probablemente no es conexo.
-        if (!result.isComplete(vertexCount)) {
-            System.out.println("Advertencia: el grafo no es conexo. No se pudo construir un MST completo con Prim.");
-        }
+        // Guardamos la información de conectividad.
+        // Si componentCount vale 1, el resultado es un MST completo.
+        // Si componentCount es mayor que 1, el resultado es un bosque.
+        result.setConnectivityInfo(componentCount);
 
+        // Si hay más de una componente, no existe un MST completo.
+        if (result.isForest()) {
+            System.out.println("Advertencia: el grafo no es conexo. Prim generó un bosque de expansión mínima.");
+        }
         return result;
     }
 
     /**
      * Compara los resultados de Prim y Kruskal sobre el mismo grafo.
-     * Es necesario según el enunciado
+     * Es necesario según el enunciado.
      *
      * Este método ejecuta ambos algoritmos, imprime sus resultados y verifica
      * si los dos producen el mismo costo total.
      *
+     * Si el grafo es conexo, ambos resultados corresponden a un MST completo.
+     * Si el grafo no es conexo, ambos resultados corresponden a un bosque
+     * de expansión mínima.
+     * 
      * Importante:
      * Prim y Kruskal pueden seleccionar aristas en diferente orden, e incluso
      * podrían producir MST distintos si existen aristas con pesos repetidos.
      *
      * Sin embargo, si ambos están correctos, el costo total del MST debe ser igual.
      *
-     * @param graph grafo de la ciudad.
+     * @param graph   grafo de la ciudad.
      * @param startId vértice inicial para ejecutar Prim.
      */
     public static void comparePrimAndKruskal(Graph graph, String startId) {
@@ -518,16 +603,42 @@ public class MSTAlgorithms {
         System.out.println("Costo Kruskal: " + kruskalResult.getTotalCost() + "m");
         System.out.println("Costo Prim: " + primResult.getTotalCost() + "m");
 
+        // Mostramos cuántas componentes detectó cada algoritmo.
+        // Si ambos algoritmos están correctos, deberían detectar la misma cantidad.
+        System.out.println("Componentes Kruskal: " + kruskalResult.getComponentCount());
+        System.out.println("Componentes Prim: " + primResult.getComponentCount());
+
+        // Si ambos algoritmos detectan distinta cantidad de componentes,
+        // algo está mal en la construcción del bosque o en el conteo de conectividad.
+        if (kruskalResult.getComponentCount() != primResult.getComponentCount()) {
+            System.out.println("Advertencia: Prim y Kruskal detectaron distinta cantidad de componentes.");
+        }
+
         /*
-        * Si los costos son iguales, ambos algoritmos produjeron un MST
+        * Si el grafo es conexo, Prim y Kruskal deben producir un MST
         * con el mismo costo total.
         *
-        * Esto es lo esperado en un grafo conectado.
+        * Si el grafo no es conexo, no existe un MST completo.
+        * En ese caso, ambos algoritmos deben producir un bosque de expansión mínima.
         */
-        if (kruskalResult.getTotalCost() == primResult.getTotalCost()) {
-            System.out.println("Resultado: ambos algoritmos generan el mismo costo total.");
+        if (primResult.isCompleteMST() && kruskalResult.isCompleteMST()) {
+
+            System.out.println("Tipo de resultado: MST completo.");
+
+            if (kruskalResult.getTotalCost() == primResult.getTotalCost()) {
+                System.out.println("Resultado: Prim y Kruskal producen el mismo costo de MST.");
+            } else {
+                System.out.println("Resultado: los costos del MST son diferentes. Se debe revisar la implementación.");
+            }
         } else {
-            System.out.println("Resultado: los costos son diferentes. Se debe revisar la implementación.");
+            System.out.println("Tipo de resultado: bosque de expansión mínima.");
+            System.out.println("Aviso: el grafo no es conexo, por lo tanto no existe un MST completo.");
+
+            if (kruskalResult.getTotalCost() == primResult.getTotalCost()) {
+                System.out.println("Resultado: Prim y Kruskal producen el mismo costo de bosque mínimo.");
+            } else {
+                System.out.println("Resultado: los costos del bosque son diferentes. Se debe revisar la implementación.");
+            }
         }
 
         System.out.println("\n--- TIEMPOS DE EJECUCIÓN ---");
@@ -535,7 +646,8 @@ public class MSTAlgorithms {
         System.out.println("Tiempo Prim: " + primResult.getExecutionTime() + " ns");
     }
 
-    /** PRUEBA
+    /**
+     * PRUEBA
      * Sirve para verificar en Main que las aristas del grafo se están obteniendo
      * correctamente y sin duplicados.
      *
@@ -559,7 +671,8 @@ public class MSTAlgorithms {
         System.out.println("Total de aristas únicas: " + edges.length);
     }
 
-    /** PRUEBA 2
+    /**
+     * PRUEBA 2
      * Método temporal de prueba.
      *
      * Obtiene todas las aristas únicas del grafo, las ordena por peso
